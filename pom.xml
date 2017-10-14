@@ -7,6 +7,8 @@
     <groupId>TP_DateBase_Parfenkov</groupId>
     <artifactId>TP_DB_Homework</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
 
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -16,7 +18,7 @@
     </parent>
 
     <properties>
-        <java.version>9</java.version>
+        <java.version>1.8</java.version>
     </properties>
 
     <dependencies>
@@ -32,6 +34,11 @@
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.zaxxer</groupId>
+            <artifactId>HikariCP</artifactId>
+            <version>2.6.0</version>
         </dependency>
 
         <dependency>
