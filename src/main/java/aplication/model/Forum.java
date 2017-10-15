@@ -2,9 +2,11 @@ package aplication.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.springframework.validation.annotation.Validated;
 
 import javax.validation.constraints.NotNull;
 
+@Validated
 public class Forum {
 
     @JsonIgnoreProperties
@@ -66,4 +68,7 @@ public class Forum {
         this.user = user;
     }
 
+    public long getId() {
+        return id;
+    }
 }

@@ -9,8 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+
 
 
 import java.sql.PreparedStatement;
@@ -56,7 +55,7 @@ public class ForumDAO {
     };
 
 
-    public Forum getForum (long id){
+    public Forum getForumbyId (long id){
         List<Forum> result = template.query("select * from forum where id=?", ps -> ps.setLong(1, id), FORUM_MAPPER);
         if (result.isEmpty()) {
             return null;
@@ -66,6 +65,14 @@ public class ForumDAO {
 
     }
 
+    public Forum getForumBySlug (String slug){
+        List<Forum> result = template.query("select * from forum where slug=?", ps -> ps.setString(1, slug), FORUM_MAPPER);
+        if (result.isEmpty()) {
+            return null;
+        }
+        return result.get(0);
+
+    }
 
 
 

@@ -1,32 +1,52 @@
 package aplication.model;
 
-import javax.validation.constraints.NotNull;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.sql.Timestamp;
+import java.time.OffsetDateTime;
 
 public class Thread {
 
-    @NotNull
-    private final long id;
+    @JsonIgnoreProperties
+    private long id;
 
-    @NotNull
+    @JsonProperty("author")
     private final String author;
 
-    @NotNull
-    private final String created;
+    @JsonProperty("created")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
+    private final Timestamp created;
 
-    @NotNull
-    private final long forum;
+    @JsonProperty("forum")
+    private long forum;
 
+    @JsonProperty("message")
     private String message;
 
-    @NotNull
-    private final String slug;
+    @JsonProperty("slug")
+    private String slug;
 
+    @JsonProperty("title")
     private String title;
 
+    @JsonProperty("votes")
     private int votes = 0;
 
-    public Thread(long id, String author, String created, long forum, String message, String slug, String title) {
-        this.id = id;
+
+    public Thread(@JsonProperty("author") String author,
+                  @JsonProperty("created") Timestamp created,
+                  @JsonProperty("message") String message,
+                  @JsonProperty("title") String title) {
+        this.author = author;
+        this.created = created;
+        this.message = message;
+        this.title = title;
+    }
+
+    public Thread(String author, Timestamp created, long forum, String message, String slug, String title){
         this.author = author;
         this.created = created;
         this.forum = forum;
@@ -34,6 +54,7 @@ public class Thread {
         this.slug = slug;
         this.title = title;
     }
+
 
     public long getId() {
         return id;
@@ -43,7 +64,7 @@ public class Thread {
         return author;
     }
 
-    public String getCreated() {
+    public Timestamp getCreated() {
         return created;
     }
 
@@ -75,8 +96,11 @@ public class Thread {
         this.title = title;
     }
 
+    public void setVotes(int votes) {
+        this.votes = votes;
+    }
 
-    public void newVoite (){
-        votes++;
+    public void setId(long id) {
+        this.id = id;
     }
 }
