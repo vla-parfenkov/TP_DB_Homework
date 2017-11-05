@@ -5,6 +5,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 
+import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.Timestamp;
 import java.time.OffsetDateTime;
@@ -87,6 +88,24 @@ public class ThreadDAO {
         return result.get(0);
 
     }
+
+
+    public List<Thread> getThreadByForum (String forumSlug, BigDecimal limit, Timestamp since, Boolean desc) {
+        List<Thread> result = template.query("select thread.*" +
+                    " from thread join forum on (thread.forum = forum.id) " +
+                    "where forum.slug=? " + ((since != null) ? "AND thread.created >= " + since.toString() : "") +
+                    "ORDER BY thread.created " + ((desc != null && desc == true) ? "desc " : "asc ") +
+                    "LIMIT ?", ps -> {
+            ps.setString(1, forumSlug);
+            ps.setBigDecimal(2, limit);
+
+        }, THREAD_MAPPER);
+        if (result.isEmpty()) {
+            return null;
+        }
+        return result;
+    }
+
 
 
 }

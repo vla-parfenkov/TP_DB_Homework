@@ -2,10 +2,12 @@ package aplication.controller;
 
 import aplication.dao.ForumDAO;
 import aplication.dao.ThreadDAO;
+import aplication.dao.UserDAO;
 import aplication.model.ErrorModels;
 import aplication.model.Forum;
 
 import aplication.model.Thread;
+import aplication.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
@@ -21,6 +23,7 @@ import javax.validation.constraints.DecimalMin;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.List;
 
 
 @RestController
@@ -29,11 +32,13 @@ public class ForumController {
 
     private final ForumDAO dbForum;
     private final ThreadDAO dbThread;
+    private final UserDAO dbUser;
 
     @Autowired
     ForumController(JdbcTemplate template){
         this.dbForum = new ForumDAO(template);
         this.dbThread = new ThreadDAO(template);
+        this.dbUser = new UserDAO(template);
     }
 
     @RequestMapping(method = RequestMethod.POST, path = "/create")
@@ -91,12 +96,35 @@ public class ForumController {
 
     @RequestMapping(method = RequestMethod.GET, path = "/{slug}/threads")
     public ResponseEntity forumGetThreads(@PathVariable(value = "slug") String slug,
+                                                        @DecimalMin("1") @DecimalMax("10000") @Valid @RequestParam(value = "limit", required = false, defaultValue="100") BigDecimal limit,
+                                                        @Valid @RequestParam(value = "since", required = false) Timestamp since,
+                                                        @Valid @RequestParam(value = "desc", required = false) Boolean desc,
+                                                        @RequestHeader(value = "Accept", required = false) String accept) {
+        List<Thread> threads = dbThread.getThreadByForum(slug, limit, since, desc);
+        if (threads == null){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorModels("Can't find forum with slug " + slug));
+        } else {
+            return ResponseEntity.status(HttpStatus.OK).body(threads);
+        }
+
+    }
+
+    @RequestMapping(method = RequestMethod.GET, path = "/{slug}/users")
+    public ResponseEntity forumGetUsers(@PathVariable(value = "slug") String slug,
                                           @DecimalMin("1") @DecimalMax("10000") @Valid @RequestParam(value = "limit", required = false, defaultValue="100") BigDecimal limit,
-                                          @Valid @RequestParam(value = "since", required = false) Timestamp since,
+                                          @Valid @RequestParam(value = "since", required = false) String since,
                                           @Valid @RequestParam(value = "desc", required = false) Boolean desc,
                                           @RequestHeader(value = "Accept", required = false) String accept) {
-      //
+        List<User> users = dbUser.getUserByForum(slug, limit, since, desc);
+        if (users == null){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorModels("Can't find forum with slug " + slug));
+        } else {
+            return ResponseEntity.status(HttpStatus.OK).body(users);
+        }
+
     }
+
+
 
 
 
