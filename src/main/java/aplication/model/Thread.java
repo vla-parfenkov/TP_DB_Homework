@@ -21,12 +21,12 @@ public class Thread {
     private final Timestamp created;
 
     @JsonProperty("forum")
-    private long forum;
+    private String forum;
 
     @JsonProperty("message")
     private String message;
 
-    @JsonProperty("slug")
+    @JsonIgnoreProperties
     private String slug;
 
     @JsonProperty("title")
@@ -46,7 +46,7 @@ public class Thread {
         this.title = title;
     }
 
-    public Thread(String author, Timestamp created, long forum, String message, String slug, String title){
+    public Thread(String author, Timestamp created, String forum, String message, String slug, String title){
         this.author = author;
         this.created = created;
         this.forum = forum;
@@ -68,7 +68,7 @@ public class Thread {
         return created;
     }
 
-    public long getForum() {
+    public String getForum() {
         return forum;
     }
 

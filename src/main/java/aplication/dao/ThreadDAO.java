@@ -25,7 +25,7 @@ public class ThreadDAO {
                                 String title,
                                 String author,
                                 Timestamp created,
-                                long forum,
+                                String forum,
                                 String message) {
         GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
         template.update(con -> {
@@ -36,7 +36,7 @@ public class ThreadDAO {
             pst.setString(2, title);
             pst.setString(3, author);
             pst.setTimestamp(4, created);
-            pst.setLong(5, forum);
+            pst.setString(5, forum);
             pst.setString(6, message);
             return pst;
         }, keyHolder);
@@ -53,7 +53,7 @@ public class ThreadDAO {
             author = null;
         }
 
-        Long forum = res.getLong("forum");
+        String forum = res.getString("forum");
         if (res.wasNull()) {
             forum = null;
         }
@@ -92,8 +92,8 @@ public class ThreadDAO {
 
     public List<Thread> getThreadByForum (String forumSlug, BigDecimal limit, Timestamp since, Boolean desc) {
         List<Thread> result = template.query("select thread.*" +
-                    " from thread join forum on (thread.forum = forum.id) " +
-                    "where forum.slug=? " + ((since != null) ? "AND thread.created >= " + since.toString() : "") +
+                    " from thread join forum on (lower(thread.forum) = lower(forum.slug)) " +
+                    "where lower(forum.slug)=lower(?) " + ((since != null) ? "AND thread.created >= " + since.toString() : "") +
                     "ORDER BY thread.created " + ((desc != null && desc == true) ? "desc " : "asc ") +
                     "LIMIT ?", ps -> {
             ps.setString(1, forumSlug);

@@ -69,12 +69,11 @@ public class ForumController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModels("Can't find forum with slug " + slug));
         }
         try {
-            //!
-            Thread thread = dbThread.createThread(threadData.getTitle(),
+            Thread thread = dbThread.createThread(threadData.getSlug(),
                     threadData.getTitle(),
                     threadData.getAuthor(),
                     threadData.getCreated(),
-                    forum.getId(),
+                    forum.getSlug(),
                     threadData.getMessage());
             return ResponseEntity.status(HttpStatus.CREATED).body(thread);
         } catch (DuplicateKeyException ex) {
@@ -106,7 +105,7 @@ public class ForumController {
                                                         @RequestHeader(value = "Accept", required = false) String accept) {
         List<Thread> threads = dbThread.getThreadByForum(slug, limit, since, desc);
         if (threads == null){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorModels("Can't find forum with slug " + slug));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModels("Can't find forum with slug " + slug));
         } else {
             return ResponseEntity.status(HttpStatus.OK).body(threads);
         }
