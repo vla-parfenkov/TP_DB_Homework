@@ -1,0 +1,1 @@
+ALTER TABLE forum ALTER COLUMN user_moderator SET NOT NULL

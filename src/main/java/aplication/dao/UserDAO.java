@@ -44,17 +44,35 @@ public class UserDAO {
 
     private static final RowMapper<User> USER_MAPPER = (res, num) -> {
 
-        return new User(res.getString("nickname"), res.getString("email"), res.getString("fullname"),
-                res.getString("about"));
+        return new User(res.getString("about"), res.getString("email"), res.getString("fullname"),
+                res.getString("nickname"));
     };
 
 
-    public User getUser (String nickname){
-        List<User> result = template.query("select * from user_account where nickname=?", ps -> ps.setString(1, nickname), USER_MAPPER);
+    public List<User> getUser (String nickname){
+        List<User> result = template.query("select * from user_account where lower(nickname)=lower(?)", ps -> ps.setString(1, nickname), USER_MAPPER);
         if (result.isEmpty()) {
             return null;
         }
-        return result.get(0);
+        return result;
+    }
+
+    public List<User> getUserForEmail (String email){
+        List<User> result = template.query("select * from user_account where lower(email)=lower(?)", ps -> ps.setString(1, email), USER_MAPPER);
+        if (result.isEmpty()) {
+            return null;
+        }
+        return result;
+    }
+
+    public List<User> getUserForEmailOrLogin (String email, String nickname){
+        List<User> result = template.query("select * from user_account where lower(email) = lower(?) OR lower(nickname) = lower(?)", ps -> {
+            ps.setString(1, email);
+            ps.setString(2, nickname);}, USER_MAPPER);
+        if (result.isEmpty()) {
+            return null;
+        }
+        return result;
     }
 
 
@@ -75,5 +93,15 @@ public class UserDAO {
         }
         return result;
     }
+
+    public void updateUser(User userData, String nickname){
+        template.update("UPDATE user_account SET about = ?, email = ?, fullname = ? WHERE lower(nickname) = lower(?)",
+                ps -> {
+            ps.setString(1, userData.getAbout());
+            ps.setString(2, userData.getEmail());
+            ps.setString(3, userData.getFullname());
+            ps.setString(4, nickname);});
+    }
+
 
 }

@@ -21,13 +21,12 @@ import javax.validation.Valid;
 import javax.validation.constraints.DecimalMax;
 import javax.validation.constraints.DecimalMin;
 import java.math.BigDecimal;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
 
 
 @RestController
-@RequestMapping(path = "/forum")
+@RequestMapping(path = "/api/forum")
 public class ForumController {
 
     private final ForumDAO dbForum;
@@ -44,13 +43,17 @@ public class ForumController {
     @RequestMapping(method = RequestMethod.POST, path = "/create")
     public ResponseEntity createForum(@RequestBody Forum forumData,
                                             @RequestHeader(value = "Accept", required = false) String accept) {
+        List<User> users = dbUser.getUser(forumData.getUser());
+        if (users == null){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModels("Can't find user with nickname " + forumData.getUser()));
+        } else {
+            forumData.setUser(users.get(0).getNickname());
+        }
         try {
             Forum forum = dbForum.createForum(forumData.getSlug(), forumData.getTitle(), forumData.getUser());
             return ResponseEntity.status(HttpStatus.CREATED).body(forum);
         } catch (DuplicateKeyException ex) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(dbForum.getForumBySlug(forumData.getSlug()));
-        } catch (DataIntegrityViolationException ex) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModels("Can't find user with nickname " + forumData.getUser()));
         }
 
     }
@@ -85,10 +88,11 @@ public class ForumController {
 
     @RequestMapping(method = RequestMethod.GET, path = "/{slug}/details")
     public ResponseEntity detailsForum(@PathVariable(value = "slug") String slug) {
-        try {
-            return ResponseEntity.status(HttpStatus.OK).body(dbForum.getForumBySlug(slug));
-        } catch (EmptyResultDataAccessException ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorModels("Can't find forum with slug " + slug));
+        Forum forum = dbForum.getForumBySlug(slug);
+        if (forum != null) {
+            return ResponseEntity.status(HttpStatus.OK).body(forum);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModels("Can't find forum with slug " + slug));
         }
 
     }

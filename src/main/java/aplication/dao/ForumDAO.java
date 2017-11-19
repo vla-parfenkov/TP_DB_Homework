@@ -61,12 +61,10 @@ public class ForumDAO {
             return null;
         }
         return result.get(0);
-
-
     }
 
     public Forum getForumBySlug (String slug){
-        List<Forum> result = template.query("select * from forum where slug=?", ps -> ps.setString(1, slug), FORUM_MAPPER);
+        List<Forum> result = template.query("select * from forum where lower(slug)=lower(?)", ps -> ps.setString(1, slug), FORUM_MAPPER);
         if (result.isEmpty()) {
             return null;
         }

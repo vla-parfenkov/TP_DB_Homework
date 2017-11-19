@@ -7,7 +7,7 @@ import java.util.Objects;
 @Validated
 public class User {
 
-    private final String nickname;
+    private String nickname;
 
     private String email;
 
@@ -16,10 +16,10 @@ public class User {
 
     private String about;
 
-    public User(@JsonProperty("about") final String about,
-                @JsonProperty("email") final String email,
-                @JsonProperty("fullname") final String fullname,
-                @JsonProperty("nickname") final String nickname){
+    public User(@JsonProperty("about") String about,
+                @JsonProperty("email") String email,
+                @JsonProperty("fullname") String fullname,
+                @JsonProperty("nickname") String nickname){
         this.nickname = nickname;
         this.email = email;
         this.fullname = fullname;
@@ -53,6 +53,10 @@ public class User {
 
     public void setAbout(String about) {
         this.about = about;
+    }
+
+    public void setNickname(String nickname) {
+        this.nickname = nickname;
     }
 
     @Override
