@@ -71,7 +71,7 @@ public class ThreadDAO {
 
 
     public Thread getThreadById (long id){
-        List<Thread> result = template.query("select * from forum where id=?", ps -> ps.setLong(1, id), THREAD_MAPPER);
+        List<Thread> result = template.query("select * from thread where id=?", ps -> ps.setLong(1, id), THREAD_MAPPER);
         if (result.isEmpty()) {
             return null;
         }
@@ -80,8 +80,18 @@ public class ThreadDAO {
 
     }
 
+    public Thread getThreadBySlug (String slug){
+        List<Thread> result = template.query("select * from thread where lower(slug)=lower(?)", ps -> ps.setString(1, slug), THREAD_MAPPER);
+        if (result.isEmpty()) {
+            return null;
+        }
+        return result.get(0);
+
+    }
+
+
     public Thread getThreadByTitle (String title){
-        List<Thread> result = template.query("select * from forum where title=?", ps -> ps.setString(1, title), THREAD_MAPPER);
+        List<Thread> result = template.query("select * from thread where title=?", ps -> ps.setString(1, title), THREAD_MAPPER);
         if (result.isEmpty()) {
             return null;
         }
@@ -92,17 +102,20 @@ public class ThreadDAO {
 
     public List<Thread> getThreadByForum (String forumSlug, BigDecimal limit, Timestamp since, Boolean desc) {
         List<Thread> result = template.query("select thread.*" +
-                    " from thread join forum on (lower(thread.forum) = lower(forum.slug)) " +
-                    "where lower(forum.slug)=lower(?) " + ((since != null) ? "AND thread.created >= " + since.toString() : "") +
+                    " from thread join forum on (thread.forum = forum.slug) " +
+                    "where lower(forum.slug)=lower(?) " + ((since != null && desc != null && desc == true) ? "AND thread.created <= ?" : "") +
+                     ((since != null && (desc == null || desc == false)) ? "AND thread.created >= ?" : "") +
                     "ORDER BY thread.created " + ((desc != null && desc == true) ? "desc " : "asc ") +
                     "LIMIT ?", ps -> {
             ps.setString(1, forumSlug);
-            ps.setBigDecimal(2, limit);
+            if(since == null) {
+                ps.setBigDecimal(2, limit);
+            } else {
+                ps.setTimestamp(2, since);
+                ps.setBigDecimal(3, limit);
+            }
 
         }, THREAD_MAPPER);
-        if (result.isEmpty()) {
-            return null;
-        }
         return result;
     }
 

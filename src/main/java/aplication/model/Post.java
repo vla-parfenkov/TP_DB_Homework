@@ -1,32 +1,74 @@
 package aplication.model;
 
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import javax.validation.constraints.NotNull;
+import java.sql.Time;
+import java.sql.Timestamp;
 
 public class Post {
 
-    @NotNull
-    private final long id;
+    @JsonIgnoreProperties
+    private long id;
 
-    @NotNull
-    private final String author;
+    @JsonProperty("author")
+    private String author;
 
-    @NotNull
-    private final String created;
+    @JsonProperty("created")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
+    private Timestamp created;
 
-    @NotNull
-    private final String forum;
+    @JsonProperty("forum")
+    private String forum;
 
+    @JsonProperty("isEdited")
     private Boolean isEdited = false;
 
+    @JsonProperty("message")
     private String message;
 
-    private final long parent;
+    @JsonProperty("parent")
+    private long parent = 0;
 
-    private final long thread;
+    public void setId(long id) {
+        this.id = id;
+    }
 
+    @JsonProperty("thread")
+    private long thread;
 
-    public Post(long id, String author, String created, String forum, String message, long parent, long thread) {
+    public void setAuthor(String author) {
+        this.author = author;
+    }
+
+    public void setCreated(Timestamp created) {
+        this.created = created;
+    }
+
+    public void setForum(String forum) {
+        this.forum = forum;
+    }
+
+    public void setParent(long parent) {
+        this.parent = parent;
+    }
+
+    public void setThread(long thread) {
+        this.thread = thread;
+    }
+
+    public Post (@JsonProperty("author") String author,
+                 @JsonProperty("message") String message,
+                 @JsonProperty("parent") Long parent) {
+        this.author = author;
+        this.message = message;
+        this.parent = parent;
+    }
+
+    public Post(long id, String author, Timestamp created, String forum, String message, long parent, long thread) {
         this.id = id;
         this.author = author;
         this.created = created;
@@ -44,7 +86,7 @@ public class Post {
         return author;
     }
 
-    public String getCreated() {
+    public Timestamp getCreated() {
         return created;
     }
 

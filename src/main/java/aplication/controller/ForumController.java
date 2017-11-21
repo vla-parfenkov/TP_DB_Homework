@@ -10,6 +10,7 @@ import aplication.model.Thread;
 import aplication.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -22,6 +23,9 @@ import javax.validation.constraints.DecimalMax;
 import javax.validation.constraints.DecimalMin;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.List;
 
 
@@ -100,13 +104,18 @@ public class ForumController {
     @RequestMapping(method = RequestMethod.GET, path = "/{slug}/threads")
     public ResponseEntity forumGetThreads(@PathVariable(value = "slug") String slug,
                                                         @DecimalMin("1") @DecimalMax("10000") @Valid @RequestParam(value = "limit", required = false, defaultValue="100") BigDecimal limit,
-                                                        @Valid @RequestParam(value = "since", required = false) Timestamp since,
+                                                        @Valid @RequestParam(value = "since", required = false) String since,
                                                         @Valid @RequestParam(value = "desc", required = false) Boolean desc,
                                                         @RequestHeader(value = "Accept", required = false) String accept) {
-        List<Thread> threads = dbThread.getThreadByForum(slug, limit, since, desc);
-        if (threads == null){
+        Timestamp timestamp = null;
+        if(since != null) {
+            OffsetDateTime offsetDateTime = OffsetDateTime.parse(since);
+            timestamp = Timestamp.valueOf(offsetDateTime.atZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime());
+        }
+        if(dbForum.getForumBySlug(slug) == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModels("Can't find forum with slug " + slug));
         } else {
+            List<Thread> threads = dbThread.getThreadByForum(slug, limit, timestamp, desc);
             return ResponseEntity.status(HttpStatus.OK).body(threads);
         }
 
