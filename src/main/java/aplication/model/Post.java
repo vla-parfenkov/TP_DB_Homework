@@ -6,13 +6,15 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.validation.constraints.NotNull;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.Time;
 import java.sql.Timestamp;
 
 public class Post {
 
     @JsonIgnoreProperties
-    private long id;
+    private BigDecimal id;
 
     @JsonProperty("author")
     private String author;
@@ -31,14 +33,14 @@ public class Post {
     private String message;
 
     @JsonProperty("parent")
-    private long parent = 0;
+    private BigDecimal parent = new BigDecimal(0);
 
-    public void setId(long id) {
+    public void setId(BigDecimal id) {
         this.id = id;
     }
 
     @JsonProperty("thread")
-    private long thread;
+    private BigDecimal thread;
 
     public void setAuthor(String author) {
         this.author = author;
@@ -52,33 +54,40 @@ public class Post {
         this.forum = forum;
     }
 
-    public void setParent(long parent) {
+    public void setParent(BigDecimal parent) {
         this.parent = parent;
     }
 
-    public void setThread(long thread) {
+    public void setThread(BigDecimal thread) {
         this.thread = thread;
     }
 
+
+
     public Post (@JsonProperty("author") String author,
                  @JsonProperty("message") String message,
-                 @JsonProperty("parent") Long parent) {
+                 @JsonProperty(value = "parent",
+                 defaultValue = "0") BigDecimal parent) {
         this.author = author;
         this.message = message;
-        this.parent = parent;
+        if(parent != null) {
+            this.parent = parent;
+        }
     }
 
-    public Post(long id, String author, Timestamp created, String forum, String message, long parent, long thread) {
+    public Post(BigDecimal id, String author, Timestamp created, String forum, String message, BigDecimal parent, BigDecimal thread) {
         this.id = id;
         this.author = author;
         this.created = created;
         this.forum = forum;
         this.message = message;
-        this.parent = parent;
+        if(parent != null) {
+            this.parent = parent;
+        }
         this.thread = thread;
     }
 
-    public long getId() {
+    public BigDecimal getId() {
         return id;
     }
 
@@ -102,11 +111,11 @@ public class Post {
         return message;
     }
 
-    public long getParent() {
+    public BigDecimal getParent() {
         return parent;
     }
 
-    public long getThread() {
+    public BigDecimal getThread() {
         return thread;
     }
 

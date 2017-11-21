@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -42,9 +43,9 @@ public class ThreadController {
     public ResponseEntity createPost(@RequestBody List<Post> postData, @PathVariable(value = "slug_or_id") String slugOrId,
                                      @RequestHeader(value = "Accept", required = false) String accept) {
         Thread thread = null;
-        Long threadId = null;
+        BigDecimal threadId = null;
         try {
-            threadId = Long.valueOf(slugOrId).longValue();
+            threadId = new BigDecimal(Long.valueOf(slugOrId).longValue());
         } catch (NumberFormatException ex){
             try {
                 thread = dbThread.getThreadBySlug(slugOrId);
@@ -67,7 +68,7 @@ public class ThreadController {
             post.setForum(thread.getForum());
         }
         try {
-            List<Post> posts = dbPost.createPost(postData);
+            List<Post> posts = dbPost.createPost(postData, thread.getId());
             return ResponseEntity.status(HttpStatus.CREATED).body(posts);
         } catch (DataIntegrityViolationException ex) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorModels("Can't find parent post "));

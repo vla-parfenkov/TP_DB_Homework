@@ -41,7 +41,7 @@ public class ThreadDAO {
             return pst;
         }, keyHolder);
         Thread thread = new Thread(author, created, forum, message, slug, title);
-        thread.setId(keyHolder.getKey().longValue());
+        thread.setId(new BigDecimal(keyHolder.getKey().longValue()));
         return thread;
     }
 
@@ -64,14 +64,14 @@ public class ThreadDAO {
                 res.getString("message"),
                 res.getString("slug"),
                 res.getString("title"));
-        thread.setId(res.getLong("id"));
+        thread.setId(res.getBigDecimal("id"));
         thread.setVotes(res.getInt("votes"));
         return thread;
     };
 
 
-    public Thread getThreadById (long id){
-        List<Thread> result = template.query("select * from thread where id=?", ps -> ps.setLong(1, id), THREAD_MAPPER);
+    public Thread getThreadById (BigDecimal id){
+        List<Thread> result = template.query("select * from thread where id=?", ps -> ps.setBigDecimal(1, id), THREAD_MAPPER);
         if (result.isEmpty()) {
             return null;
         }

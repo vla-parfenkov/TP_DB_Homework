@@ -36,12 +36,12 @@ public class PostDAO {
             author = null;
         }
 
-        Long thread = res.getLong("thread");
+        BigDecimal thread = res.getBigDecimal("thread");
         if (res.wasNull()) {
             thread = null;
         }
 
-        Long parent = res.getLong("parent");
+        BigDecimal parent = res.getBigDecimal("parent");
         if (res.wasNull()){
             parent = null;
         }
@@ -51,7 +51,7 @@ public class PostDAO {
             forum = null;
         }
 
-        Post post = new Post(res.getLong("id"),
+        Post post = new Post(res.getBigDecimal("id"),
                 author,
                 res.getTimestamp("created"),
                 forum,
@@ -63,12 +63,13 @@ public class PostDAO {
 
 
 
-    public List<Post> createPost (List<Post> posts) {
+    public List<Post> createPost (List<Post> posts, BigDecimal threadId ) {
         if(posts.isEmpty()) {
             return posts;
         }
-        List<Long> nextval = template.query("select nextval('post_id_seq'::regclass)", ResultSet::getLong);
-        String sql = "insert into post(created, message, isedited, author, thread, parent, forum) values(?,?,?,?,?,?, ?)";
+
+        BigDecimal nextval = template.queryForObject("select nextval('post_id_seq'::regclass)", BigDecimal.class);
+        String sql = "insert into post(created, message, isedited, author, thread, parent, forum, path) values(?,?,?,?,?,?,?, (SELECT path FROM post WHERE id = ? AND thread = ?) || (select currval('post_id_seq'::regclass)))";
         template.batchUpdate(sql, new BatchPreparedStatementSetter() {
 
                 @Override
@@ -77,9 +78,11 @@ public class PostDAO {
                     ps.setString(2, posts.get(i).getMessage());
                     ps.setBoolean(3, posts.get(i).getEdited());
                     ps.setString(4, posts.get(i).getAuthor());
-                    ps.setLong(5, posts.get(i).getThread() );
-                    ps.setLong(6,  posts.get(i).getParent());
+                    ps.setBigDecimal(5, posts.get(i).getThread() );
+                    ps.setBigDecimal(6,  posts.get(i).getParent());
                     ps.setString(7, posts.get(i).getForum());
+                    ps.setBigDecimal(8, posts.get(i).getParent());
+                    ps.setBigDecimal(9, threadId);
                 }
 
                 @Override
@@ -88,9 +91,9 @@ public class PostDAO {
                 }
             });
 
-            Long incId = nextval.get(0);
+            Long incId = nextval.longValue();
             for (Post post: posts) {
-                post.setId(incId);
+                post.setId(new BigDecimal(incId));
                 incId += 1;
             }
 

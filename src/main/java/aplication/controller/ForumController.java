@@ -66,10 +66,8 @@ public class ForumController {
     @RequestMapping(method = RequestMethod.POST, path = "/{slug}/create")
     public ResponseEntity createThread(@RequestBody Thread threadData,  @PathVariable(value = "slug") String slug,
                                       @RequestHeader(value = "Accept", required = false) String accept) {
-        Forum forum = null;
-        try {
-            forum = dbForum.getForumBySlug(slug);
-        } catch (EmptyResultDataAccessException ex){
+        Forum forum = dbForum.getForumBySlug(slug);
+        if(forum == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModels("Can't find forum with slug " + slug));
         }
         try {
@@ -81,7 +79,7 @@ public class ForumController {
                     threadData.getMessage());
             return ResponseEntity.status(HttpStatus.CREATED).body(thread);
         } catch (DuplicateKeyException ex) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(dbThread.getThreadByTitle(threadData.getTitle()));
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(dbThread.getThreadBySlug(threadData.getSlug()));
         } catch (DataIntegrityViolationException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModels("Can't find user with nickname " + threadData.getAuthor()));
         }

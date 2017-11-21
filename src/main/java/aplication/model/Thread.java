@@ -5,13 +5,14 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.OffsetDateTime;
 
 public class Thread {
 
     @JsonIgnoreProperties
-    private long id;
+    private BigDecimal id;
 
     @JsonProperty("author")
     private final String author;
@@ -56,7 +57,7 @@ public class Thread {
     }
 
 
-    public long getId() {
+    public BigDecimal getId() {
         return id;
     }
 
@@ -100,7 +101,7 @@ public class Thread {
         this.votes = votes;
     }
 
-    public void setId(long id) {
+    public void setId(BigDecimal id) {
         this.id = id;
     }
 }

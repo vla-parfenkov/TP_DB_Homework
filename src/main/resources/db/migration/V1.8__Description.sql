@@ -1,1 +1,0 @@
-ALTER TABLE thread ALTER COLUMN slug TYPE citext;
