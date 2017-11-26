@@ -3,14 +3,12 @@ package aplication.controller;
 import aplication.dao.ForumDAO;
 import aplication.dao.ThreadDAO;
 import aplication.dao.UserDAO;
-import aplication.model.ErrorModels;
+import aplication.model.ErrorModel;
 import aplication.model.Forum;
 
 import aplication.model.Thread;
 import aplication.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -21,11 +19,10 @@ import org.springframework.dao.DataIntegrityViolationException;
 import javax.validation.Valid;
 import javax.validation.constraints.DecimalMax;
 import javax.validation.constraints.DecimalMin;
-import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.util.List;
 
 
@@ -49,7 +46,7 @@ public class ForumController {
                                             @RequestHeader(value = "Accept", required = false) String accept) {
         List<User> users = dbUser.getUser(forumData.getUser());
         if (users == null){
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModels("Can't find user with nickname " + forumData.getUser()));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel("Can't find user with nickname " + forumData.getUser()));
         } else {
             forumData.setUser(users.get(0).getNickname());
         }
@@ -68,7 +65,7 @@ public class ForumController {
                                       @RequestHeader(value = "Accept", required = false) String accept) {
         Forum forum = dbForum.getForumBySlug(slug);
         if(forum == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModels("Can't find forum with slug " + slug));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel("Can't find forum with slug " + slug));
         }
         try {
             Thread thread = dbThread.createThread(threadData.getSlug(),
@@ -81,7 +78,7 @@ public class ForumController {
         } catch (DuplicateKeyException ex) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(dbThread.getThreadBySlug(threadData.getSlug()));
         } catch (DataIntegrityViolationException ex) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModels("Can't find user with nickname " + threadData.getAuthor()));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel("Can't find user with nickname " + threadData.getAuthor()));
         }
 
     }
@@ -93,7 +90,7 @@ public class ForumController {
         if (forum != null) {
             return ResponseEntity.status(HttpStatus.OK).body(forum);
         } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModels("Can't find forum with slug " + slug));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel("Can't find forum with slug " + slug));
         }
 
     }
@@ -101,7 +98,7 @@ public class ForumController {
 
     @RequestMapping(method = RequestMethod.GET, path = "/{slug}/threads")
     public ResponseEntity forumGetThreads(@PathVariable(value = "slug") String slug,
-                                                        @DecimalMin("1") @DecimalMax("10000") @Valid @RequestParam(value = "limit", required = false, defaultValue="100") BigDecimal limit,
+                                                        @DecimalMin("1") @DecimalMax("10000") @Valid @RequestParam(value = "limit", required = false, defaultValue="100") BigInteger limit,
                                                         @Valid @RequestParam(value = "since", required = false) String since,
                                                         @Valid @RequestParam(value = "desc", required = false) Boolean desc,
                                                         @RequestHeader(value = "Accept", required = false) String accept) {
@@ -111,7 +108,7 @@ public class ForumController {
             timestamp = Timestamp.valueOf(offsetDateTime.atZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime());
         }
         if(dbForum.getForumBySlug(slug) == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModels("Can't find forum with slug " + slug));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel("Can't find forum with slug " + slug));
         } else {
             List<Thread> threads = dbThread.getThreadByForum(slug, limit, timestamp, desc);
             return ResponseEntity.status(HttpStatus.OK).body(threads);
@@ -121,16 +118,17 @@ public class ForumController {
 
     @RequestMapping(method = RequestMethod.GET, path = "/{slug}/users")
     public ResponseEntity forumGetUsers(@PathVariable(value = "slug") String slug,
-                                          @DecimalMin("1") @DecimalMax("10000") @Valid @RequestParam(value = "limit", required = false, defaultValue="100") BigDecimal limit,
+                                          @DecimalMin("1") @DecimalMax("10000") @Valid @RequestParam(value = "limit", required = false, defaultValue="100") BigInteger limit,
                                           @Valid @RequestParam(value = "since", required = false) String since,
-                                          @Valid @RequestParam(value = "desc", required = false) Boolean desc,
+                                          @Valid @RequestParam(value = "desc", required = false, defaultValue = "false") Boolean desc,
                                           @RequestHeader(value = "Accept", required = false) String accept) {
-        List<User> users = dbUser.getUserByForum(slug, limit, since, desc);
-        if (users == null){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorModels("Can't find forum with slug " + slug));
-        } else {
-            return ResponseEntity.status(HttpStatus.OK).body(users);
+
+        if(dbForum.getForumBySlug(slug) == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel("Can't find forum with slug " + slug));
         }
+
+        List<User> users = dbUser.getUserByForum(slug, limit, since, desc);
+        return ResponseEntity.status(HttpStatus.OK).body(users);
 
     }
 

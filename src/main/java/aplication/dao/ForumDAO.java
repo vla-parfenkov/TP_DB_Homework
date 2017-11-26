@@ -11,7 +11,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 
 
-import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.PreparedStatement;
 import java.util.List;
 
@@ -36,7 +36,7 @@ public class ForumDAO {
             pst.setString(3, user);
             return pst;
         }, keyHolder);
-        return new Forum(new BigDecimal(keyHolder.getKey().longValue()),new BigDecimal(0), new BigDecimal(0), slug, title, user);
+        return new Forum(BigInteger.valueOf(keyHolder.getKey().longValue()),BigInteger.valueOf(0), BigInteger.valueOf(0), slug, title, user);
     }
 
     private static final RowMapper<Forum> FORUM_MAPPER = (res, num) -> {
@@ -46,17 +46,17 @@ public class ForumDAO {
             user = null;
         }
 
-        return new Forum(res.getBigDecimal("id"),
-                res.getBigDecimal("posts"),
-                res.getBigDecimal("threads"),
+        return new Forum(BigInteger.valueOf(res.getLong("id")),
+                BigInteger.valueOf(res.getLong("posts")),
+                BigInteger.valueOf(res.getLong("threads")),
                 res.getString("slug"),
                 res.getString("title"),
                 user);
     };
 
 
-    public Forum getForumbyId (BigDecimal id){
-        List<Forum> result = template.query("select * from forum where id=?", ps -> ps.setBigDecimal(1, id), FORUM_MAPPER);
+    public Forum getForumbyId (BigInteger id){
+        List<Forum> result = template.query("select * from forum where id=?", ps -> ps.setLong(1, id.longValue()), FORUM_MAPPER);
         if (result.isEmpty()) {
             return null;
         }

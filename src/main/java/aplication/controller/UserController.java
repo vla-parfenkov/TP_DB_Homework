@@ -1,6 +1,6 @@
 package aplication.controller;
 
-import aplication.model.ErrorModels;
+import aplication.model.ErrorModel;
 import aplication.model.User;
 
 
@@ -42,7 +42,7 @@ public class UserController {
     public ResponseEntity infoUser(@PathVariable(value = "nickname") String nickname) {
         List<User> users = dbUser.getUser(nickname);
         if (users == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModels("Can't find user with nickname " + nickname));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel("Can't find user with nickname " + nickname));
         } else {
             return ResponseEntity.status(HttpStatus.OK).body(users.get(0));
         }
@@ -55,7 +55,7 @@ public class UserController {
                                            @RequestHeader(value = "Accept", required = false) String accept ) {
         final List<User> users = dbUser.getUser(nickname);
         if(users == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModels("Can't find user with nickname " + nickname));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel("Can't find user with nickname " + nickname));
         } else {
             if(userData.getEmail() == null) {
                 userData.setEmail(users.get(0).getEmail());
@@ -70,7 +70,7 @@ public class UserController {
                 dbUser.updateUser(userData, nickname);
                 return ResponseEntity.status(HttpStatus.OK).body(dbUser.getUser(nickname).get(0));
             } catch (DuplicateKeyException ex) {
-                return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorModels("This email is already registered by user: " + dbUser.getUserForEmail(userData.getEmail()).get(0).getNickname()));
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorModel("This email is already registered by user: " + dbUser.getUserForEmail(userData.getEmail()).get(0).getNickname()));
             }
         }
 

@@ -4,15 +4,17 @@ package aplication.model;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.springframework.validation.annotation.Validated;
 
-import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.time.OffsetDateTime;
 
+@Validated
 public class Thread {
 
     @JsonIgnoreProperties
-    private BigDecimal id;
+    private BigInteger id;
 
     @JsonProperty("author")
     private final String author;
@@ -57,7 +59,7 @@ public class Thread {
     }
 
 
-    public BigDecimal getId() {
+    public BigInteger getId() {
         return id;
     }
 
@@ -101,7 +103,7 @@ public class Thread {
         this.votes = votes;
     }
 
-    public void setId(BigDecimal id) {
+    public void setId(BigInteger id) {
         this.id = id;
     }
 }

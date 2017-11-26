@@ -5,22 +5,22 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.validation.annotation.Validated;
 
 import javax.validation.constraints.NotNull;
-import java.math.BigDecimal;
+import java.math.BigInteger;
 
 @Validated
 public class Forum {
 
     @JsonIgnoreProperties
-    private BigDecimal id;
+    private BigInteger id;
 
     @JsonProperty("posts")
-    private BigDecimal posts = new BigDecimal(0);
+    private BigInteger posts = BigInteger.valueOf(0);
 
     @JsonProperty("slug")
     private final String slug;
 
     @JsonProperty("threads")
-    private BigDecimal threads = new BigDecimal(0);
+    private BigInteger threads = BigInteger.valueOf(0);
 
     @JsonProperty("title")
     private final String title;
@@ -36,7 +36,7 @@ public class Forum {
         this.user = user;
     }
 
-    public Forum(BigDecimal id, BigDecimal posts, BigDecimal threads, String slug, String title, String user) {
+    public Forum(BigInteger id, BigInteger posts, BigInteger threads, String slug, String title, String user) {
         this.id = id;
         this.posts = posts;
         this.threads = threads;
@@ -45,7 +45,7 @@ public class Forum {
         this.user = user;
     }
 
-    public BigDecimal getPosts() {
+    public BigInteger getPosts() {
         return posts;
     }
 
@@ -61,7 +61,7 @@ public class Forum {
         return user;
     }
 
-    public BigDecimal getThreads() {
+    public BigInteger getThreads() {
         return threads;
     }
 
@@ -69,7 +69,7 @@ public class Forum {
         this.user = user;
     }
 
-    public BigDecimal getId() {
+    public BigInteger getId() {
         return id;
     }
 }

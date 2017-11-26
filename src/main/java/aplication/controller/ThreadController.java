@@ -1,9 +1,6 @@
 package aplication.controller;
 
-import aplication.dao.ForumDAO;
-import aplication.dao.PostDAO;
-import aplication.dao.ThreadDAO;
-import aplication.dao.UserDAO;
+import aplication.dao.*;
 import aplication.model.*;
 import aplication.model.Thread;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,9 +12,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
+import javax.validation.Valid;
+import javax.validation.constraints.DecimalMax;
+import javax.validation.constraints.DecimalMin;
+import java.math.BigInteger;
+import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.List;
@@ -30,6 +30,7 @@ public class ThreadController {
     private final ThreadDAO dbThread;
     private final UserDAO dbUser;
     private final PostDAO dbPost;
+    private final VoteDAO dbVote;
 
     @Autowired
     ThreadController(JdbcTemplate template){
@@ -37,41 +38,165 @@ public class ThreadController {
         this.dbThread = new ThreadDAO(template);
         this.dbUser = new UserDAO(template);
         this.dbPost = new PostDAO(template);
+        this.dbVote = new VoteDAO(template);
     }
 
     @RequestMapping(method = RequestMethod.POST, path = "/{slug_or_id}/create")
     public ResponseEntity createPost(@RequestBody List<Post> postData, @PathVariable(value = "slug_or_id") String slugOrId,
                                      @RequestHeader(value = "Accept", required = false) String accept) {
         Thread thread = null;
-        BigDecimal threadId = null;
+        BigInteger threadId = null;
         try {
-            threadId = new BigDecimal(Long.valueOf(slugOrId).longValue());
+            threadId = BigInteger.valueOf(Long.valueOf(slugOrId).longValue());
         } catch (NumberFormatException ex){
-            try {
-                thread = dbThread.getThreadBySlug(slugOrId);
-            } catch (EmptyResultDataAccessException emptyEx){
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModels("Can't find thread with slug " + slugOrId));
+            thread = dbThread.getThreadBySlug(slugOrId);
+            if (thread == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel("Can't find thread with id " + slugOrId));
             }
         }
         if(thread == null) {
-            try {
-                thread = dbThread.getThreadById(threadId);
-            } catch (EmptyResultDataAccessException emptyEx) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModels("Can't find thread with id " + slugOrId));
+            thread = dbThread.getThreadById(threadId);
+            if (thread == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel("Can't find thread with id " + slugOrId));
             }
         }
         final OffsetDateTime offsetDateTime = OffsetDateTime.now();
         for (Post post:postData) {
             post.setCreated(Timestamp.valueOf(offsetDateTime.atZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime()));
             post.setThread(thread.getId());
-            post.setEdited(false);
+            post.setIsEdited(false);
             post.setForum(thread.getForum());
         }
         try {
             List<Post> posts = dbPost.createPost(postData, thread.getId());
             return ResponseEntity.status(HttpStatus.CREATED).body(posts);
         } catch (DataIntegrityViolationException ex) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorModels("Can't find parent post "));
+          return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel("Can't find post author by nickname"));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorModel("Can't find parent post "));
+        }
+
+    }
+
+   @RequestMapping(method = RequestMethod.POST, path = "/{slug_or_id}/vote")
+    public ResponseEntity vote(@RequestBody Vote vote, @PathVariable(value = "slug_or_id") String slugOrId,
+                                @RequestHeader(value = "Accept", required = false) String accept) {
+       Thread thread;
+       BigInteger threadId = null;
+       try {
+           threadId = BigInteger.valueOf(Long.valueOf(slugOrId).longValue());
+           thread = dbThread.getThreadById(threadId);
+       } catch (NumberFormatException ex){
+           thread = dbThread.getThreadBySlug(slugOrId);
+       }
+       if(thread == null) {
+           return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel("Can't find thread with id " + threadId));
+       }
+
+       try {
+               dbVote.createVote(vote.getNickname(), vote.getVoice(), thread.getId());
+               thread.setVotes(thread.getVotes() + vote.getVoice());
+               return ResponseEntity.status(HttpStatus.OK).body(thread);
+       } catch (DuplicateKeyException ex) {
+           try {
+                   dbVote.updateVote(vote.getNickname(), vote.getVoice(), thread.getId());
+                   return ResponseEntity.status(HttpStatus.OK).body(dbThread.getThreadById(thread.getId()));
+           } catch (DataIntegrityViolationException dataEx) {
+                   return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel("Can't find thread with id " + threadId));
+           }
+       } catch (DataIntegrityViolationException ex) {
+           return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel("Can't find author with id " + vote.getNickname()));
+       }
+
+    }
+
+    @RequestMapping(method = RequestMethod.GET, path = "/{slug_or_id}/details")
+    public ResponseEntity detailsThread(@PathVariable(value = "slug_or_id") String slugOrId) {
+        Thread thread = null;
+        BigInteger threadId = null;
+        try {
+            threadId = BigInteger.valueOf(Long.valueOf(slugOrId).longValue());
+        } catch (NumberFormatException ex){
+            threadId = null;
+
+        }
+        if(threadId == null) {
+            thread = dbThread.getThreadBySlug(slugOrId);
+        } else {
+            thread = dbThread.getThreadById(threadId);
+        }
+        if(thread == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel("Can't find thread with "));
+        } else {
+            return ResponseEntity.status(HttpStatus.OK).body(thread);
+        }
+
+    }
+
+
+    @RequestMapping(method = RequestMethod.GET, path = "/{slug_or_id}/posts")
+    public ResponseEntity threadGetPosts(@PathVariable(value = "slug_or_id") String slugOrId,
+                                          @DecimalMin("1") @DecimalMax("10000") @Valid @RequestParam(value = "limit", required = false, defaultValue="100") BigInteger limit,
+                                          @Valid @RequestParam(value = "since", required = false) BigInteger since,
+                                         @Valid @RequestParam(value = "sort", required = false, defaultValue = "flat") String sort,
+                                          @Valid @RequestParam(value = "desc", required = false, defaultValue = "false") Boolean desc,
+                                          @RequestHeader(value = "Accept", required = false) String accept) {
+        BigInteger threadId;
+        try {
+            threadId = BigInteger.valueOf(Long.valueOf(slugOrId).longValue());
+            if(dbThread.getThreadById(threadId) == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel("Can't find thread with slug_or_id " + slugOrId));
+            }
+        } catch (NumberFormatException ex){
+            Thread thread = dbThread.getThreadBySlug(slugOrId);
+            if (thread == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel("Can't find thread with slug_or_id " + slugOrId));
+            } else {
+                threadId = thread.getId();
+            }
+
+        }
+
+        try {
+            List<Post> posts = dbPost.getPostByThread(threadId, limit, since, sort, desc);
+            return ResponseEntity.status(HttpStatus.OK).body(posts);
+        } catch (DataIntegrityViolationException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorModel(ex.toString()));
+        }
+
+    }
+
+    @RequestMapping(method = RequestMethod.POST, path = "/{slug_or_id}/details")
+    public ResponseEntity updateThread(@RequestBody Thread threadData,@PathVariable(value = "slug_or_id") String slugOrId) {
+        Thread thread = null;
+        BigInteger threadId = null;
+        try {
+            threadId = BigInteger.valueOf(Long.valueOf(slugOrId).longValue());
+        } catch (NumberFormatException ex){
+            threadId = null;
+
+        }
+        if(threadId == null) {
+            thread = dbThread.getThreadBySlug(slugOrId);
+        } else {
+            thread = dbThread.getThreadById(threadId);
+        }
+
+        if(thread == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel("Can't find thread with " + slugOrId));
+
+        } else {
+            if (threadData == null) {
+                return ResponseEntity.status(HttpStatus.OK).body(thread);
+            }
+            if (threadData.getMessage() != null) {
+                thread.setMessage(threadData.getMessage());
+            }
+            if (threadData.getTitle() != null) {
+                thread.setTitle(threadData.getTitle());
+            }
+            dbThread.updateThread(thread);
+            return ResponseEntity.status(HttpStatus.OK).body(thread);
         }
 
     }

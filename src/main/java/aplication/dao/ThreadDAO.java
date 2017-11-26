@@ -5,7 +5,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 
-import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.PreparedStatement;
 import java.sql.Timestamp;
 import java.time.OffsetDateTime;
@@ -41,7 +41,7 @@ public class ThreadDAO {
             return pst;
         }, keyHolder);
         Thread thread = new Thread(author, created, forum, message, slug, title);
-        thread.setId(new BigDecimal(keyHolder.getKey().longValue()));
+        thread.setId(BigInteger.valueOf(keyHolder.getKey().longValue()));
         return thread;
     }
 
@@ -64,14 +64,17 @@ public class ThreadDAO {
                 res.getString("message"),
                 res.getString("slug"),
                 res.getString("title"));
-        thread.setId(res.getBigDecimal("id"));
+        thread.setId(BigInteger.valueOf(res.getLong("id")));
         thread.setVotes(res.getInt("votes"));
         return thread;
     };
 
 
-    public Thread getThreadById (BigDecimal id){
-        List<Thread> result = template.query("select * from thread where id=?", ps -> ps.setBigDecimal(1, id), THREAD_MAPPER);
+    public Thread getThreadById (BigInteger id){
+        if(id == null) {
+            return null;
+        }
+        List<Thread> result = template.query("select * from thread where id=?", ps -> ps.setLong(1, id.longValue()), THREAD_MAPPER);
         if (result.isEmpty()) {
             return null;
         }
@@ -100,24 +103,35 @@ public class ThreadDAO {
     }
 
 
-    public List<Thread> getThreadByForum (String forumSlug, BigDecimal limit, Timestamp since, Boolean desc) {
+    public List<Thread> getThreadByForum (String forumSlug, BigInteger limit, Timestamp since, Boolean desc) {
         List<Thread> result = template.query("select thread.*" +
-                    " from thread join forum on (thread.forum = forum.slug) " +
-                    "where lower(forum.slug)=lower(?) " + ((since != null && desc != null && desc == true) ? "AND thread.created <= ?" : "") +
+                    " from thread " +
+                    "where lower(thread.forum)=lower(?) " + ((since != null && desc != null && desc == true) ? "AND thread.created <= ?" : "") +
                      ((since != null && (desc == null || desc == false)) ? "AND thread.created >= ?" : "") +
                     "ORDER BY thread.created " + ((desc != null && desc == true) ? "desc " : "asc ") +
                     "LIMIT ?", ps -> {
             ps.setString(1, forumSlug);
             if(since == null) {
-                ps.setBigDecimal(2, limit);
+                ps.setLong(2, limit.longValue());
             } else {
                 ps.setTimestamp(2, since);
-                ps.setBigDecimal(3, limit);
+                ps.setLong(3, limit.longValue());
             }
 
         }, THREAD_MAPPER);
         return result;
     }
+
+
+    public void updateThread(Thread threadData){
+        template.update("UPDATE thread SET message = ?, title = ? WHERE id = ?",
+                ps -> {
+                    ps.setString(1, threadData.getMessage());
+                    ps.setString(2, threadData.getTitle());
+                    ps.setLong(3, threadData.getId().longValue());
+        });
+    }
+
 
 
 

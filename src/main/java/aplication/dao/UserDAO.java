@@ -2,6 +2,7 @@ package aplication.dao;
 
 import aplication.model.Thread;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -10,9 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import aplication.model.User;
 
-import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.PreparedStatement;
-import java.sql.Timestamp;
 import java.util.List;
 
 @Service
@@ -65,6 +65,7 @@ public class UserDAO {
         return result;
     }
 
+
     public List<User> getUserForEmailOrLogin (String email, String nickname){
         List<User> result = template.query("select * from user_account where lower(email) = lower(?) OR lower(nickname) = lower(?)", ps -> {
             ps.setString(1, email);
@@ -76,21 +77,28 @@ public class UserDAO {
     }
 
 
-    public List<User> getUserByForum (String forumSlug, BigDecimal limit, String since, Boolean desc) {
-        List<User> result = template.query("select DISTINCT user_account.*" +
-                " from thread join forum on (thread.forum = forum.id) " +
-                "left join post on (post.thread = thread.id)" +
-                "join user_account on (post.author = user_account.nickname or thread.author = user_account.nickname)" +
-                "where forum.slug=? " + ((since != null) ? "AND user_account.nicname > " + since : "") +
-                "ORDER BY user_account.nickname " + ((desc != null && desc == true) ? "desc " : "asc ") +
-                "LIMIT ?", ps -> {
-            ps.setString(1, forumSlug);
-            ps.setBigDecimal(2, limit);
+    public List<User> getUserByForum (String forumSlug, BigInteger limit, String since, Boolean desc) {
+        if (desc == null) {
+            desc = false;
+        }
+        List<User> result = template.query("select DISTINCT user_account.* " +
+                    " from thread join forum on (lower(thread.forum) = lower(forum.slug)) " +
+                    "left join post on (post.thread = thread.id) " +
+                    "join user_account on (lower(post.author) = lower(user_account.nickname) or lower(thread.author) = lower(user_account.nickname)) " +
+                    "where lower(forum.slug)=lower(?) " + ((since != null && desc == true) ? "AND lower(user_account.nickname) < lower(?)  " : "") +
+                    ((since != null && desc == false) ? "AND lower(user_account.nickname) > lower(?) " : "") +
+                    "ORDER BY user_account.nickname " + ((desc == true) ? "desc " : "asc ") +
+                    "LIMIT ?", ps -> {
+                ps.setString(1, forumSlug);
+                if (since != null) {
+                    ps.setString(2, since);
+                    ps.setLong(3, limit.longValue());
+                } else {
+                    ps.setLong(2, limit.longValue());
+                }
 
         }, USER_MAPPER);
-        if (result.isEmpty()) {
-            return null;
-        }
+
         return result;
     }
 

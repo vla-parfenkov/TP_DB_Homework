@@ -4,15 +4,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.validation.annotation.Validated;
 
 @Validated
-public class ErrorModels {
+public class ErrorModel {
     @JsonProperty("message")
     private String message = null;
 
-    public ErrorModels(String message) {
+    public ErrorModel(String message) {
         this.message = message;
     }
 
-    public ErrorModels message(String message) {
+    public ErrorModel message(String message) {
         this.message = message;
         return this;
     }

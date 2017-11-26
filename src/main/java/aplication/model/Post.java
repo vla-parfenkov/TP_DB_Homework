@@ -4,17 +4,16 @@ package aplication.model;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.springframework.validation.annotation.Validated;
 
-import javax.validation.constraints.NotNull;
-import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.sql.Time;
 import java.sql.Timestamp;
 
+@Validated
 public class Post {
 
     @JsonIgnoreProperties
-    private BigDecimal id;
+    private BigInteger id;
 
     @JsonProperty("author")
     private String author;
@@ -33,14 +32,14 @@ public class Post {
     private String message;
 
     @JsonProperty("parent")
-    private BigDecimal parent = new BigDecimal(0);
+    private BigInteger parent = BigInteger.valueOf(0);
 
-    public void setId(BigDecimal id) {
+    public void setId(BigInteger id) {
         this.id = id;
     }
 
     @JsonProperty("thread")
-    private BigDecimal thread;
+    private BigInteger thread;
 
     public void setAuthor(String author) {
         this.author = author;
@@ -54,11 +53,11 @@ public class Post {
         this.forum = forum;
     }
 
-    public void setParent(BigDecimal parent) {
+    public void setParent(BigInteger parent) {
         this.parent = parent;
     }
 
-    public void setThread(BigDecimal thread) {
+    public void setThread(BigInteger thread) {
         this.thread = thread;
     }
 
@@ -67,7 +66,7 @@ public class Post {
     public Post (@JsonProperty("author") String author,
                  @JsonProperty("message") String message,
                  @JsonProperty(value = "parent",
-                 defaultValue = "0") BigDecimal parent) {
+                 defaultValue = "0") BigInteger parent) {
         this.author = author;
         this.message = message;
         if(parent != null) {
@@ -75,7 +74,7 @@ public class Post {
         }
     }
 
-    public Post(BigDecimal id, String author, Timestamp created, String forum, String message, BigDecimal parent, BigDecimal thread) {
+    public Post(BigInteger id, String author, Timestamp created, String forum, String message, BigInteger parent, BigInteger thread) {
         this.id = id;
         this.author = author;
         this.created = created;
@@ -87,7 +86,7 @@ public class Post {
         this.thread = thread;
     }
 
-    public BigDecimal getId() {
+    public BigInteger getId() {
         return id;
     }
 
@@ -103,23 +102,23 @@ public class Post {
         return forum;
     }
 
-    public Boolean getEdited() {
-        return isEdited;
-    }
-
     public String getMessage() {
         return message;
     }
 
-    public BigDecimal getParent() {
+    public Boolean getIsEdited() {
+        return isEdited;
+    }
+
+    public BigInteger getParent() {
         return parent;
     }
 
-    public BigDecimal getThread() {
+    public BigInteger getThread() {
         return thread;
     }
 
-    public void setEdited(Boolean edited) {
+    public void setIsEdited(Boolean edited) {
         isEdited = edited;
     }
 
