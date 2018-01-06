@@ -5,6 +5,7 @@ import aplication.model.Thread;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -15,15 +16,18 @@ import java.math.BigInteger;
 import java.math.BigInteger;
 import java.sql.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 @Transactional
 public class PostDAO {
     private final JdbcTemplate template;
+    private static final AtomicLong POST_ID_GENERATOR = new AtomicLong(1);;
 
     @Autowired
     public PostDAO(JdbcTemplate template) {
         this.template = template;
+
     }
 
     private static final RowMapper<Post> POST_MAPPER = (res, num) -> {
@@ -93,6 +97,10 @@ public class PostDAO {
         return post;
     };
 
+    private static final RowMapper<BigInteger> SETVAL_MAPPER = (res, num) -> {
+        return BigInteger.valueOf(res.getLong("setval"));
+    };
+
 
 
     public List<Post> createPost (List<Post> posts, BigInteger threadId ) {
@@ -101,13 +109,21 @@ public class PostDAO {
         }
 
 
-
-        BigInteger nextval = template.queryForObject("select nextval('post_id_seq'::regclass)", BigInteger.class);
-        Long incId = nextval.longValue();
-        for (Post post: posts) {
-            post.setId(BigInteger.valueOf(incId));
-            incId += 1;
+        if (POST_ID_GENERATOR.get() == 1) {
+            final BigInteger nextval = template.queryForObject("select nextval('post_id_seq'::regclass)",
+                    BigInteger.class);
+            if (nextval != null) {
+                POST_ID_GENERATOR.set(nextval.longValue());
+            }
         }
+
+        template.query("select setval('post_id_seq'::regclass, ?) as setval",
+                ps -> ps.setLong(1, POST_ID_GENERATOR.get() + posts.size()), SETVAL_MAPPER);
+
+        for (Post post: posts) {
+            post.setId(BigInteger.valueOf(POST_ID_GENERATOR.getAndIncrement()));
+        }
+
 
         String sql = "insert into post(id, created, message, isedited, author, thread, parent, forum) " +
                 "values(?,?,?,?,?,?,?,?)";
@@ -130,6 +146,7 @@ public class PostDAO {
                     return posts.size();
                 }
             });
+
 
 
         return posts;

@@ -24,17 +24,15 @@ public class VoteDAO {
 
 
     public Vote createVote(String nickname, Integer voice, BigInteger thread) {
-        GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
         template.update(con -> {
             PreparedStatement pst = con.prepareStatement(
-                    "insert into thread_votes(nickname, thread, voice)" + " values(?,?,?)" + " returning id",
-                    PreparedStatement.RETURN_GENERATED_KEYS);
+                    "insert into thread_votes(nickname, thread, voice)" + " values(?,?,?)");
             pst.setString(1, nickname);
             pst.setLong(2, thread.longValue());
             pst.setInt(3, voice);
             return pst;
-        }, keyHolder);
-        return new Vote(BigInteger.valueOf(keyHolder.getKey().longValue()), nickname, voice, thread);
+        });
+        return new Vote(nickname, voice, thread);
     }
 
     public void updateVote(String nickname, Integer voice, BigInteger thread) {

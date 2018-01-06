@@ -59,8 +59,7 @@ public class Vote {
         this.voice = voice;
     }
 
-    public Vote(BigInteger id, String nickname, Integer voice, BigInteger thread) {
-        this.id = id;
+    public Vote(String nickname, Integer voice, BigInteger thread) {
         this.nickname = nickname;
         this.voice = voice;
         this.thread = thread;

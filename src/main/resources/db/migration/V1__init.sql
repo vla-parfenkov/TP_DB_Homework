@@ -5,7 +5,7 @@
 -- Dumped from database version 9.6.5
 -- Dumped by pg_dump version 10.0
 
--- Started on 2017-11-26 13:45:07 MSK
+-- Started on 2018-01-06 18:07:47 MSK
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -14,6 +14,7 @@ SET standard_conforming_strings = on;
 SET check_function_bodies = false;
 SET client_min_messages = warning;
 SET row_security = off;
+
 
 --
 -- TOC entry 1 (class 3079 OID 12429)
@@ -24,7 +25,7 @@ CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
 
 
 --
--- TOC entry 2316 (class 0 OID 0)
+-- TOC entry 2342 (class 0 OID 0)
 -- Dependencies: 1
 -- Name: EXTENSION plpgsql; Type: COMMENT; Schema: -; Owner:
 --
@@ -33,7 +34,7 @@ COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
 
 
 --
--- TOC entry 2 (class 3079 OID 35501)
+-- TOC entry 2 (class 3079 OID 37868)
 -- Name: citext; Type: EXTENSION; Schema: -; Owner:
 --
 
@@ -41,7 +42,7 @@ CREATE EXTENSION IF NOT EXISTS citext WITH SCHEMA public;
 
 
 --
--- TOC entry 2317 (class 0 OID 0)
+-- TOC entry 2343 (class 0 OID 0)
 -- Dependencies: 2
 -- Name: EXTENSION citext; Type: COMMENT; Schema: -; Owner:
 --
@@ -52,7 +53,7 @@ COMMENT ON EXTENSION citext IS 'data type for case-insensitive character strings
 SET search_path = public, pg_catalog;
 
 --
--- TOC entry 249 (class 1255 OID 36860)
+-- TOC entry 246 (class 1255 OID 37952)
 -- Name: create_path_post(); Type: FUNCTION; Schema: public; Owner: vlad
 --
 
@@ -82,26 +83,7 @@ $$;
 ALTER FUNCTION public.create_path_post() OWNER TO vlad;
 
 --
--- TOC entry 246 (class 1255 OID 35767)
--- Name: process_add_post(); Type: FUNCTION; Schema: public; Owner: vlad
---
-
-CREATE FUNCTION process_add_post() RETURNS trigger
-LANGUAGE plpgsql
-AS $$
-
-BEGIN
-
-  PERFORM setval('post_id_seq'::regclass, NEW.id);
-  RETURN NEW;
-END;
-$$;
-
-
-ALTER FUNCTION public.process_add_post() OWNER TO vlad;
-
---
--- TOC entry 247 (class 1255 OID 36154)
+-- TOC entry 247 (class 1255 OID 37954)
 -- Name: process_increment_post_forum(); Type: FUNCTION; Schema: public; Owner: vlad
 --
 
@@ -126,7 +108,7 @@ $$;
 ALTER FUNCTION public.process_increment_post_forum() OWNER TO vlad;
 
 --
--- TOC entry 248 (class 1255 OID 36156)
+-- TOC entry 248 (class 1255 OID 37955)
 -- Name: process_increment_thread_forum(); Type: FUNCTION; Schema: public; Owner: vlad
 --
 
@@ -151,28 +133,33 @@ $$;
 ALTER FUNCTION public.process_increment_thread_forum() OWNER TO vlad;
 
 --
--- TOC entry 245 (class 1255 OID 35698)
+-- TOC entry 249 (class 1255 OID 38853)
 -- Name: process_vote(); Type: FUNCTION; Schema: public; Owner: vlad
 --
 
 CREATE FUNCTION process_vote() RETURNS trigger
 LANGUAGE plpgsql
 AS $$
+DECLARE
+  score INTEGER;
 
 BEGIN
   IF (TG_OP = 'DELETE') THEN
+    score := (SELECT thread.votes FROM thread WHERE thread.id = OLD.thread)::INTEGER - OLD.voice::INTEGER;
     UPDATE thread
-    SET votes = (SELECT sum(voice) FROM thread_votes WHERE thread_votes.thread = OLD.thread)::INTEGER
+    SET votes = score
     WHERE thread.id = OLD.thread;
     RETURN OLD;
   ELSIF (TG_OP = 'UPDATE') THEN
+    score := (SELECT thread.votes FROM thread WHERE thread.id = OLD.thread)::INTEGER - OLD.voice::INTEGER + NEW.voice::INTEGER;
     UPDATE thread
-    SET votes = (SELECT sum(voice) FROM thread_votes WHERE thread_votes.thread = NEW.thread)::INTEGER
+    SET votes = score
     WHERE thread.id = NEW.thread;
     RETURN NEW;
   ELSIF (TG_OP = 'INSERT') THEN
+    score := (SELECT thread.votes FROM thread WHERE thread.id = NEW.thread)::INTEGER + NEW.voice::INTEGER;
     UPDATE thread
-    SET votes = (SELECT sum(voice) FROM thread_votes WHERE thread_votes.thread = NEW.thread)::INTEGER
+    SET votes = score
     WHERE thread.id = NEW.thread;
     RETURN NEW;
   END IF;
@@ -188,7 +175,7 @@ SET default_tablespace = '';
 SET default_with_oids = false;
 
 --
--- TOC entry 192 (class 1259 OID 36519)
+-- TOC entry 187 (class 1259 OID 37957)
 -- Name: forum; Type: TABLE; Schema: public; Owner: vlad
 --
 
@@ -205,7 +192,7 @@ CREATE TABLE forum (
 ALTER TABLE forum OWNER TO vlad;
 
 --
--- TOC entry 193 (class 1259 OID 36527)
+-- TOC entry 188 (class 1259 OID 37965)
 -- Name: forum_id_seq; Type: SEQUENCE; Schema: public; Owner: vlad
 --
 
@@ -220,8 +207,8 @@ CACHE 1;
 ALTER TABLE forum_id_seq OWNER TO vlad;
 
 --
--- TOC entry 2318 (class 0 OID 0)
--- Dependencies: 193
+-- TOC entry 2344 (class 0 OID 0)
+-- Dependencies: 188
 -- Name: forum_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: vlad
 --
 
@@ -229,7 +216,7 @@ ALTER SEQUENCE forum_id_seq OWNED BY forum.id;
 
 
 --
--- TOC entry 186 (class 1259 OID 35595)
+-- TOC entry 189 (class 1259 OID 37967)
 -- Name: post; Type: TABLE; Schema: public; Owner: vlad
 --
 
@@ -249,7 +236,7 @@ CREATE TABLE post (
 ALTER TABLE post OWNER TO vlad;
 
 --
--- TOC entry 187 (class 1259 OID 35604)
+-- TOC entry 190 (class 1259 OID 37976)
 -- Name: post_id_seq; Type: SEQUENCE; Schema: public; Owner: vlad
 --
 
@@ -264,8 +251,8 @@ CACHE 1;
 ALTER TABLE post_id_seq OWNER TO vlad;
 
 --
--- TOC entry 2319 (class 0 OID 0)
--- Dependencies: 187
+-- TOC entry 2345 (class 0 OID 0)
+-- Dependencies: 190
 -- Name: post_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: vlad
 --
 
@@ -273,8 +260,11 @@ ALTER SEQUENCE post_id_seq OWNED BY post.id;
 
 
 --
--- TOC entry 194 (class 1259 OID 36529)
--- Name: thread; Type: TABLE; Schema: public; Owner: vlad
+-- TOC entry 186 (class 1259 OID 37858)
+-- Name: schema_version; Type: TABLE; Schema: public; Owner: vlad
+--
+
+
 --
 
 CREATE TABLE thread (
@@ -292,7 +282,7 @@ CREATE TABLE thread (
 ALTER TABLE thread OWNER TO vlad;
 
 --
--- TOC entry 195 (class 1259 OID 36536)
+-- TOC entry 192 (class 1259 OID 37985)
 -- Name: thread_id_seq; Type: SEQUENCE; Schema: public; Owner: vlad
 --
 
@@ -307,8 +297,8 @@ CACHE 1;
 ALTER TABLE thread_id_seq OWNER TO vlad;
 
 --
--- TOC entry 2320 (class 0 OID 0)
--- Dependencies: 195
+-- TOC entry 2346 (class 0 OID 0)
+-- Dependencies: 192
 -- Name: thread_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: vlad
 --
 
@@ -316,7 +306,7 @@ ALTER SEQUENCE thread_id_seq OWNED BY thread.id;
 
 
 --
--- TOC entry 191 (class 1259 OID 35677)
+-- TOC entry 193 (class 1259 OID 37987)
 -- Name: thread_votes; Type: TABLE; Schema: public; Owner: vlad
 --
 
@@ -331,7 +321,7 @@ CREATE TABLE thread_votes (
 ALTER TABLE thread_votes OWNER TO vlad;
 
 --
--- TOC entry 190 (class 1259 OID 35675)
+-- TOC entry 194 (class 1259 OID 37993)
 -- Name: thread_votes_id_seq; Type: SEQUENCE; Schema: public; Owner: vlad
 --
 
@@ -346,8 +336,8 @@ CACHE 1;
 ALTER TABLE thread_votes_id_seq OWNER TO vlad;
 
 --
--- TOC entry 2321 (class 0 OID 0)
--- Dependencies: 190
+-- TOC entry 2347 (class 0 OID 0)
+-- Dependencies: 194
 -- Name: thread_votes_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: vlad
 --
 
@@ -355,7 +345,7 @@ ALTER SEQUENCE thread_votes_id_seq OWNED BY thread_votes.id;
 
 
 --
--- TOC entry 188 (class 1259 OID 35615)
+-- TOC entry 195 (class 1259 OID 37995)
 -- Name: user_account; Type: TABLE; Schema: public; Owner: vlad
 --
 
@@ -371,7 +361,7 @@ CREATE TABLE user_account (
 ALTER TABLE user_account OWNER TO vlad;
 
 --
--- TOC entry 189 (class 1259 OID 35621)
+-- TOC entry 196 (class 1259 OID 38001)
 -- Name: user_account_id_seq; Type: SEQUENCE; Schema: public; Owner: vlad
 --
 
@@ -386,8 +376,8 @@ CACHE 1;
 ALTER TABLE user_account_id_seq OWNER TO vlad;
 
 --
--- TOC entry 2322 (class 0 OID 0)
--- Dependencies: 189
+-- TOC entry 2348 (class 0 OID 0)
+-- Dependencies: 196
 -- Name: user_account_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: vlad
 --
 
@@ -395,7 +385,7 @@ ALTER SEQUENCE user_account_id_seq OWNED BY user_account.id;
 
 
 --
--- TOC entry 2160 (class 2604 OID 36538)
+-- TOC entry 2159 (class 2604 OID 38003)
 -- Name: forum id; Type: DEFAULT; Schema: public; Owner: vlad
 --
 
@@ -403,7 +393,7 @@ ALTER TABLE ONLY forum ALTER COLUMN id SET DEFAULT nextval('forum_id_seq'::regcl
 
 
 --
--- TOC entry 2155 (class 2604 OID 36539)
+-- TOC entry 2163 (class 2604 OID 38004)
 -- Name: post id; Type: DEFAULT; Schema: public; Owner: vlad
 --
 
@@ -411,7 +401,7 @@ ALTER TABLE ONLY post ALTER COLUMN id SET DEFAULT nextval('post_id_seq'::regclas
 
 
 --
--- TOC entry 2162 (class 2604 OID 36540)
+-- TOC entry 2165 (class 2604 OID 38005)
 -- Name: thread id; Type: DEFAULT; Schema: public; Owner: vlad
 --
 
@@ -419,7 +409,7 @@ ALTER TABLE ONLY thread ALTER COLUMN id SET DEFAULT nextval('thread_id_seq'::reg
 
 
 --
--- TOC entry 2157 (class 2604 OID 35680)
+-- TOC entry 2166 (class 2604 OID 38006)
 -- Name: thread_votes id; Type: DEFAULT; Schema: public; Owner: vlad
 --
 
@@ -427,15 +417,56 @@ ALTER TABLE ONLY thread_votes ALTER COLUMN id SET DEFAULT nextval('thread_votes_
 
 
 --
--- TOC entry 2156 (class 2604 OID 36541)
+-- TOC entry 2167 (class 2604 OID 38007)
 -- Name: user_account id; Type: DEFAULT; Schema: public; Owner: vlad
 --
 
 ALTER TABLE ONLY user_account ALTER COLUMN id SET DEFAULT nextval('user_account_id_seq'::regclass);
 
 
+
+
+SELECT pg_catalog.setval('forum_id_seq', 2341, true);
+
+
 --
--- TOC entry 2176 (class 2606 OID 36543)
+-- TOC entry 2350 (class 0 OID 0)
+-- Dependencies: 190
+-- Name: post_id_seq; Type: SEQUENCE SET; Schema: public; Owner: vlad
+--
+
+SELECT pg_catalog.setval('post_id_seq', 917347, true);
+
+
+--
+-- TOC entry 2351 (class 0 OID 0)
+-- Dependencies: 192
+-- Name: thread_id_seq; Type: SEQUENCE SET; Schema: public; Owner: vlad
+--
+
+SELECT pg_catalog.setval('thread_id_seq', 73463, true);
+
+
+--
+-- TOC entry 2352 (class 0 OID 0)
+-- Dependencies: 194
+-- Name: thread_votes_id_seq; Type: SEQUENCE SET; Schema: public; Owner: vlad
+--
+
+SELECT pg_catalog.setval('thread_votes_id_seq', 527929, true);
+
+
+--
+-- TOC entry 2353 (class 0 OID 0)
+-- Dependencies: 196
+-- Name: user_account_id_seq; Type: SEQUENCE SET; Schema: public; Owner: vlad
+--
+
+SELECT pg_catalog.setval('user_account_id_seq', 15161, true);
+
+
+--
+-- TOC entry 2174 (class 2606 OID 38009)
 -- Name: forum forum_pkey; Type: CONSTRAINT; Schema: public; Owner: vlad
 --
 
@@ -444,7 +475,7 @@ ALTER TABLE ONLY forum
 
 
 --
--- TOC entry 2178 (class 2606 OID 36545)
+-- TOC entry 2176 (class 2606 OID 38011)
 -- Name: forum forum_slug_key; Type: CONSTRAINT; Schema: public; Owner: vlad
 --
 
@@ -453,7 +484,7 @@ ALTER TABLE ONLY forum
 
 
 --
--- TOC entry 2164 (class 2606 OID 35632)
+-- TOC entry 2179 (class 2606 OID 38013)
 -- Name: post post_pkey; Type: CONSTRAINT; Schema: public; Owner: vlad
 --
 
@@ -462,16 +493,18 @@ ALTER TABLE ONLY post
 
 
 --
--- TOC entry 2180 (class 2606 OID 36547)
--- Name: thread thread_pkey; Type: CONSTRAINT; Schema: public; Owner: vlad
+-- TOC entry 2169 (class 2606 OID 37866)
+-- Name: schema_version schema_version_pk; Type: CONSTRAINT; Schema: public; Owner: vlad
 --
+
+
 
 ALTER TABLE ONLY thread
   ADD CONSTRAINT thread_pkey PRIMARY KEY (id);
 
 
 --
--- TOC entry 2182 (class 2606 OID 36549)
+-- TOC entry 2185 (class 2606 OID 38017)
 -- Name: thread thread_slug_key; Type: CONSTRAINT; Schema: public; Owner: vlad
 --
 
@@ -480,7 +513,7 @@ ALTER TABLE ONLY thread
 
 
 --
--- TOC entry 2172 (class 2606 OID 35697)
+-- TOC entry 2188 (class 2606 OID 38019)
 -- Name: thread_votes thread_votes_nickname_thread_uk; Type: CONSTRAINT; Schema: public; Owner: vlad
 --
 
@@ -489,7 +522,7 @@ ALTER TABLE ONLY thread_votes
 
 
 --
--- TOC entry 2174 (class 2606 OID 35685)
+-- TOC entry 2190 (class 2606 OID 38021)
 -- Name: thread_votes thread_votes_pkey; Type: CONSTRAINT; Schema: public; Owner: vlad
 --
 
@@ -498,7 +531,7 @@ ALTER TABLE ONLY thread_votes
 
 
 --
--- TOC entry 2166 (class 2606 OID 35640)
+-- TOC entry 2192 (class 2606 OID 38023)
 -- Name: user_account user_account_email_key; Type: CONSTRAINT; Schema: public; Owner: vlad
 --
 
@@ -507,7 +540,7 @@ ALTER TABLE ONLY user_account
 
 
 --
--- TOC entry 2168 (class 2606 OID 36358)
+-- TOC entry 2196 (class 2606 OID 38025)
 -- Name: user_account user_account_nickname_key; Type: CONSTRAINT; Schema: public; Owner: vlad
 --
 
@@ -516,7 +549,7 @@ ALTER TABLE ONLY user_account
 
 
 --
--- TOC entry 2170 (class 2606 OID 35644)
+-- TOC entry 2198 (class 2606 OID 38027)
 -- Name: user_account user_account_pkey; Type: CONSTRAINT; Schema: public; Owner: vlad
 --
 
@@ -525,15 +558,73 @@ ALTER TABLE ONLY user_account
 
 
 --
--- TOC entry 2188 (class 2620 OID 35793)
--- Name: post trigger_add_post; Type: TRIGGER; Schema: public; Owner: vlad
+-- TOC entry 2171 (class 1259 OID 38973)
+-- Name: forum_id_index; Type: INDEX; Schema: public; Owner: vlad
 --
 
-CREATE TRIGGER trigger_add_post AFTER INSERT ON post FOR EACH ROW EXECUTE PROCEDURE process_add_post();
+CREATE INDEX forum_id_index ON forum USING btree (id);
 
 
 --
--- TOC entry 2189 (class 2620 OID 36861)
+-- TOC entry 2172 (class 1259 OID 38974)
+-- Name: forum_lower_slug_index; Type: INDEX; Schema: public; Owner: vlad
+--
+
+CREATE INDEX forum_lower_slug_index ON forum USING btree (lower((slug)::text));
+
+
+--
+-- TOC entry 2177 (class 1259 OID 38977)
+-- Name: post_id_index; Type: INDEX; Schema: public; Owner: vlad
+--
+
+CREATE INDEX post_id_index ON post USING btree (id);
+
+
+--
+-- TOC entry 2170 (class 1259 OID 37867)
+-- Name: schema_version_s_idx; Type: INDEX; Schema: public; Owner: vlad
+--
+
+
+
+CREATE INDEX thread_id_index ON thread USING btree (id);
+
+
+--
+-- TOC entry 2181 (class 1259 OID 38975)
+-- Name: thread_lower_slug_index; Type: INDEX; Schema: public; Owner: vlad
+--
+
+CREATE INDEX thread_lower_slug_index ON thread USING btree (lower((slug)::text));
+
+
+--
+-- TOC entry 2186 (class 1259 OID 38972)
+-- Name: thread_votes_index; Type: INDEX; Schema: public; Owner: vlad
+--
+
+CREATE INDEX thread_votes_index ON thread_votes USING btree (lower((nickname)::text), thread);
+
+
+--
+-- TOC entry 2193 (class 1259 OID 38970)
+-- Name: user_account_lower_email_index; Type: INDEX; Schema: public; Owner: vlad
+--
+
+CREATE INDEX user_account_lower_email_index ON user_account USING btree (lower((email)::text));
+
+
+--
+-- TOC entry 2194 (class 1259 OID 38969)
+-- Name: user_account_lower_nickname_index; Type: INDEX; Schema: public; Owner: vlad
+--
+
+CREATE INDEX user_account_lower_nickname_index ON user_account USING btree (lower((nickname)::text));
+
+
+--
+-- TOC entry 2204 (class 2620 OID 38029)
 -- Name: post trigger_create_path_post; Type: TRIGGER; Schema: public; Owner: vlad
 --
 
@@ -541,7 +632,7 @@ CREATE TRIGGER trigger_create_path_post BEFORE INSERT ON post FOR EACH ROW EXECU
 
 
 --
--- TOC entry 2190 (class 2620 OID 36155)
+-- TOC entry 2205 (class 2620 OID 38030)
 -- Name: post trigger_inc_post_forum; Type: TRIGGER; Schema: public; Owner: vlad
 --
 
@@ -549,7 +640,7 @@ CREATE TRIGGER trigger_inc_post_forum AFTER INSERT OR DELETE ON post FOR EACH RO
 
 
 --
--- TOC entry 2192 (class 2620 OID 36569)
+-- TOC entry 2206 (class 2620 OID 38031)
 -- Name: thread trigger_inc_thread_forum; Type: TRIGGER; Schema: public; Owner: vlad
 --
 
@@ -557,7 +648,7 @@ CREATE TRIGGER trigger_inc_thread_forum AFTER INSERT OR DELETE ON thread FOR EAC
 
 
 --
--- TOC entry 2191 (class 2620 OID 35699)
+-- TOC entry 2207 (class 2620 OID 38854)
 -- Name: thread_votes trigger_vote; Type: TRIGGER; Schema: public; Owner: vlad
 --
 
@@ -565,7 +656,7 @@ CREATE TRIGGER trigger_vote AFTER INSERT OR DELETE OR UPDATE ON thread_votes FOR
 
 
 --
--- TOC entry 2185 (class 2606 OID 36552)
+-- TOC entry 2199 (class 2606 OID 38033)
 -- Name: forum forum_user_moderator_fkey; Type: FK CONSTRAINT; Schema: public; Owner: vlad
 --
 
@@ -574,7 +665,7 @@ ALTER TABLE ONLY forum
 
 
 --
--- TOC entry 2183 (class 2606 OID 36364)
+-- TOC entry 2200 (class 2606 OID 38038)
 -- Name: post post_author_fkey; Type: FK CONSTRAINT; Schema: public; Owner: vlad
 --
 
@@ -583,7 +674,7 @@ ALTER TABLE ONLY post
 
 
 --
--- TOC entry 2186 (class 2606 OID 36557)
+-- TOC entry 2201 (class 2606 OID 38043)
 -- Name: thread thread_author_fkey; Type: FK CONSTRAINT; Schema: public; Owner: vlad
 --
 
@@ -592,7 +683,7 @@ ALTER TABLE ONLY thread
 
 
 --
--- TOC entry 2187 (class 2606 OID 36562)
+-- TOC entry 2202 (class 2606 OID 38048)
 -- Name: thread thread_forum_fkey; Type: FK CONSTRAINT; Schema: public; Owner: vlad
 --
 
@@ -601,7 +692,7 @@ ALTER TABLE ONLY thread
 
 
 --
--- TOC entry 2184 (class 2606 OID 36374)
+-- TOC entry 2203 (class 2606 OID 38053)
 -- Name: thread_votes thread_votes_nickname_fkey; Type: FK CONSTRAINT; Schema: public; Owner: vlad
 --
 
@@ -609,8 +700,9 @@ ALTER TABLE ONLY thread_votes
   ADD CONSTRAINT thread_votes_nickname_fkey FOREIGN KEY (nickname) REFERENCES user_account(nickname);
 
 
--- Completed on 2017-11-26 13:45:09 MSK
+-- Completed on 2018-01-06 18:07:47 MSK
 
 --
 -- PostgreSQL database dump complete
 --
+

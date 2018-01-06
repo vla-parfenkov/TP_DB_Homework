@@ -30,7 +30,8 @@ public class ThreadDAO {
         GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
         template.update(con -> {
             PreparedStatement pst = con.prepareStatement(
-                    "insert into thread(slug, title, author, created, forum, message)" + " values(?,?,?,?,?,?)" + " returning id",
+                    "insert into thread(slug, title, author, created, forum, message, votes)"
+                            + " values(?,?,?,?,?,?,0)" + " returning id",
                     PreparedStatement.RETURN_GENERATED_KEYS);
             pst.setString(1, slug);
             pst.setString(2, title);
