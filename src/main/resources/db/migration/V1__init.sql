@@ -426,7 +426,7 @@ ALTER TABLE ONLY user_account ALTER COLUMN id SET DEFAULT nextval('user_account_
 
 
 
-SELECT pg_catalog.setval('forum_id_seq', 2341, true);
+SELECT pg_catalog.setval('forum_id_seq', 1, true);
 
 
 --
@@ -435,7 +435,7 @@ SELECT pg_catalog.setval('forum_id_seq', 2341, true);
 -- Name: post_id_seq; Type: SEQUENCE SET; Schema: public; Owner: vlad
 --
 
-SELECT pg_catalog.setval('post_id_seq', 917347, true);
+SELECT pg_catalog.setval('post_id_seq', 1, true);
 
 
 --
@@ -444,7 +444,7 @@ SELECT pg_catalog.setval('post_id_seq', 917347, true);
 -- Name: thread_id_seq; Type: SEQUENCE SET; Schema: public; Owner: vlad
 --
 
-SELECT pg_catalog.setval('thread_id_seq', 73463, true);
+SELECT pg_catalog.setval('thread_id_seq', 1, true);
 
 
 --
@@ -453,7 +453,7 @@ SELECT pg_catalog.setval('thread_id_seq', 73463, true);
 -- Name: thread_votes_id_seq; Type: SEQUENCE SET; Schema: public; Owner: vlad
 --
 
-SELECT pg_catalog.setval('thread_votes_id_seq', 527929, true);
+SELECT pg_catalog.setval('thread_votes_id_seq', 1, true);
 
 
 --
@@ -462,7 +462,7 @@ SELECT pg_catalog.setval('thread_votes_id_seq', 527929, true);
 -- Name: user_account_id_seq; Type: SEQUENCE SET; Schema: public; Owner: vlad
 --
 
-SELECT pg_catalog.setval('user_account_id_seq', 15161, true);
+SELECT pg_catalog.setval('user_account_id_seq', 1, true);
 
 
 --
@@ -566,7 +566,7 @@ CREATE INDEX forum_id_index ON forum USING btree (id);
 
 
 --
--- TOC entry 2172 (class 1259 OID 38974)
+-- TOC entry 2161 (class 1259 OID 39902)
 -- Name: forum_lower_slug_index; Type: INDEX; Schema: public; Owner: vlad
 --
 
@@ -574,7 +574,15 @@ CREATE INDEX forum_lower_slug_index ON forum USING btree (lower((slug)::text));
 
 
 --
--- TOC entry 2177 (class 1259 OID 38977)
+-- TOC entry 2166 (class 1259 OID 40061)
+-- Name: post_created_id_index; Type: INDEX; Schema: public; Owner: vlad
+--
+
+CREATE INDEX post_created_id_index ON post USING btree (created, id);
+
+
+--
+-- TOC entry 2167 (class 1259 OID 39903)
 -- Name: post_id_index; Type: INDEX; Schema: public; Owner: vlad
 --
 
@@ -582,17 +590,39 @@ CREATE INDEX post_id_index ON post USING btree (id);
 
 
 --
--- TOC entry 2170 (class 1259 OID 37867)
--- Name: schema_version_s_idx; Type: INDEX; Schema: public; Owner: vlad
+-- TOC entry 2168 (class 1259 OID 40062)
+-- Name: post_path_id_index; Type: INDEX; Schema: public; Owner: vlad
 --
 
+CREATE INDEX post_path_id_index ON post USING btree (path, id);
 
+
+--
+-- TOC entry 2171 (class 1259 OID 39938)
+-- Name: post_thread_index; Type: INDEX; Schema: public; Owner: vlad
+--
+
+CREATE INDEX post_thread_index ON post USING btree (thread);
+
+
+--
+-- TOC entry 2172 (class 1259 OID 39904)
+-- Name: thread_id_index; Type: INDEX; Schema: public; Owner: vlad
+--
 
 CREATE INDEX thread_id_index ON thread USING btree (id);
 
 
 --
--- TOC entry 2181 (class 1259 OID 38975)
+-- TOC entry 2173 (class 1259 OID 40153)
+-- Name: thread_lower_forum_created_index; Type: INDEX; Schema: public; Owner: vlad
+--
+
+CREATE INDEX thread_lower_forum_created_index ON thread USING btree (lower((forum)::text), created);
+
+
+--
+-- TOC entry 2174 (class 1259 OID 39905)
 -- Name: thread_lower_slug_index; Type: INDEX; Schema: public; Owner: vlad
 --
 
@@ -600,7 +630,7 @@ CREATE INDEX thread_lower_slug_index ON thread USING btree (lower((slug)::text))
 
 
 --
--- TOC entry 2186 (class 1259 OID 38972)
+-- TOC entry 2179 (class 1259 OID 39906)
 -- Name: thread_votes_index; Type: INDEX; Schema: public; Owner: vlad
 --
 
@@ -608,7 +638,7 @@ CREATE INDEX thread_votes_index ON thread_votes USING btree (lower((nickname)::t
 
 
 --
--- TOC entry 2193 (class 1259 OID 38970)
+-- TOC entry 2186 (class 1259 OID 39907)
 -- Name: user_account_lower_email_index; Type: INDEX; Schema: public; Owner: vlad
 --
 
@@ -616,7 +646,7 @@ CREATE INDEX user_account_lower_email_index ON user_account USING btree (lower((
 
 
 --
--- TOC entry 2194 (class 1259 OID 38969)
+-- TOC entry 2187 (class 1259 OID 39908)
 -- Name: user_account_lower_nickname_index; Type: INDEX; Schema: public; Owner: vlad
 --
 

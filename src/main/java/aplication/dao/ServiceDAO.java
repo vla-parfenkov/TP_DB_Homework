@@ -30,12 +30,9 @@ public class ServiceDAO {
 
 
     public ServiceModel serviceInfo(){
-        List<ServiceModel> serviceModels = template.query("SELECT * FROM (Select count(*) as forum\n" +
+        List<ServiceModel> serviceModels = template.query("SELECT * FROM (Select count(*) as forum, " +
+                "sum(posts) as post, sum(threads) as thread\n" +
                 "FROM forum ) as f CROSS JOIN\n" +
-                " (Select count(*) as post\n" +
-                "FROM post ) as p CROSS JOIN\n" +
-                " (Select count(*) as thread\n" +
-                "FROM thread ) as t CROSS JOIN\n" +
                 " (Select count(*) as user\n" +
                 "FROM user_account) as u", SERVICE_MAPPER);
         if(serviceModels.isEmpty()) {

@@ -72,7 +72,7 @@ public class ThreadController {
             return ResponseEntity.status(HttpStatus.CREATED).body(posts);
         } catch (DataIntegrityViolationException ex) {
           return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel("Can't find post author by nickname"));
-        } catch (Exception ex) {
+        } catch (RuntimeException ex) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorModel("Can't find parent post "));
         }
 
