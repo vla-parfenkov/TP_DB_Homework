@@ -24,13 +24,10 @@ public class VoteDAO {
 
 
     public Vote createVote(String nickname, Integer voice, BigInteger thread) {
-        template.update(con -> {
-            PreparedStatement pst = con.prepareStatement(
-                    "insert into thread_votes(nickname, thread, voice)" + " values(?,?,?)");
-            pst.setString(1, nickname);
-            pst.setLong(2, thread.longValue());
-            pst.setInt(3, voice);
-            return pst;
+        template.update("insert into thread_votes(nickname, thread, voice)" + " values(?,?,?)", ps ->{
+            ps.setString(1, nickname);
+            ps.setLong(2, thread.longValue());
+            ps.setInt(3, voice);
         });
         return new Vote(nickname, voice, thread);
     }

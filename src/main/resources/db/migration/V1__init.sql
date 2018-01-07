@@ -92,11 +92,11 @@ LANGUAGE plpgsql
 AS $$
 BEGIN
   IF (TG_OP = 'DELETE') THEN
-    UPDATE forum SET posts = ((SELECT posts FROM forum WHERE lower(slug) = lower(OLD.forum)) - 1)
+    UPDATE forum SET posts = posts - 1
     WHERE lower(slug) = lower(OLD.forum);
     RETURN OLD;
   ELSIF (TG_OP = 'INSERT') THEN
-    UPDATE forum SET posts = ((SELECT posts FROM forum WHERE lower(slug) = lower(NEW.forum))::INTEGER + 1)
+    UPDATE forum SET posts = posts + 1
     WHERE lower(slug) = lower(NEW.forum);
     RETURN NEW;
   END IF;
@@ -117,11 +117,11 @@ LANGUAGE plpgsql
 AS $$
 BEGIN
   IF (TG_OP = 'DELETE') THEN
-    UPDATE forum SET threads = ((SELECT threads FROM forum WHERE lower(slug) = lower(OLD.forum)) - 1)
+    UPDATE forum SET threads = threads - 1
     WHERE lower(slug) = lower(OLD.forum);
     RETURN OLD;
   ELSIF (TG_OP = 'INSERT') THEN
-    UPDATE forum SET threads = ((SELECT threads FROM forum WHERE lower(slug) = lower(NEW.forum))::INTEGER + 1)
+    UPDATE forum SET threads = threads + 1
     WHERE lower(slug) = lower(NEW.forum);
     RETURN NEW;
   END IF;
@@ -140,26 +140,20 @@ ALTER FUNCTION public.process_increment_thread_forum() OWNER TO vlad;
 CREATE FUNCTION process_vote() RETURNS trigger
 LANGUAGE plpgsql
 AS $$
-DECLARE
-  score INTEGER;
-
 BEGIN
   IF (TG_OP = 'DELETE') THEN
-    score := (SELECT thread.votes FROM thread WHERE thread.id = OLD.thread)::INTEGER - OLD.voice::INTEGER;
     UPDATE thread
-    SET votes = score
+    SET votes = votes - OLD.voice
     WHERE thread.id = OLD.thread;
     RETURN OLD;
   ELSIF (TG_OP = 'UPDATE') THEN
-    score := (SELECT thread.votes FROM thread WHERE thread.id = OLD.thread)::INTEGER - OLD.voice::INTEGER + NEW.voice::INTEGER;
     UPDATE thread
-    SET votes = score
+    SET votes = votes - OLD.voice + NEW.voice
     WHERE thread.id = NEW.thread;
     RETURN NEW;
   ELSIF (TG_OP = 'INSERT') THEN
-    score := (SELECT thread.votes FROM thread WHERE thread.id = NEW.thread)::INTEGER + NEW.voice::INTEGER;
     UPDATE thread
-    SET votes = score
+    SET votes = votes + NEW.voice
     WHERE thread.id = NEW.thread;
     RETURN NEW;
   END IF;
@@ -566,7 +560,7 @@ CREATE INDEX forum_id_index ON forum USING btree (id);
 
 
 --
--- TOC entry 2161 (class 1259 OID 39902)
+-- TOC entry 2161 (class 1259 OID 40616)
 -- Name: forum_lower_slug_index; Type: INDEX; Schema: public; Owner: vlad
 --
 
@@ -574,7 +568,7 @@ CREATE INDEX forum_lower_slug_index ON forum USING btree (lower((slug)::text));
 
 
 --
--- TOC entry 2166 (class 1259 OID 40061)
+-- TOC entry 2166 (class 1259 OID 40617)
 -- Name: post_created_id_index; Type: INDEX; Schema: public; Owner: vlad
 --
 
@@ -582,7 +576,7 @@ CREATE INDEX post_created_id_index ON post USING btree (created, id);
 
 
 --
--- TOC entry 2167 (class 1259 OID 39903)
+-- TOC entry 2167 (class 1259 OID 40618)
 -- Name: post_id_index; Type: INDEX; Schema: public; Owner: vlad
 --
 
@@ -590,7 +584,15 @@ CREATE INDEX post_id_index ON post USING btree (id);
 
 
 --
--- TOC entry 2168 (class 1259 OID 40062)
+-- TOC entry 2168 (class 1259 OID 40877)
+-- Name: post_lower_forum_index; Type: INDEX; Schema: public; Owner: vlad
+--
+
+CREATE INDEX post_lower_forum_index ON post USING btree (lower((forum)::text));
+
+
+--
+-- TOC entry 2169 (class 1259 OID 40619)
 -- Name: post_path_id_index; Type: INDEX; Schema: public; Owner: vlad
 --
 
@@ -598,7 +600,7 @@ CREATE INDEX post_path_id_index ON post USING btree (path, id);
 
 
 --
--- TOC entry 2171 (class 1259 OID 39938)
+-- TOC entry 2172 (class 1259 OID 40620)
 -- Name: post_thread_index; Type: INDEX; Schema: public; Owner: vlad
 --
 
@@ -606,7 +608,7 @@ CREATE INDEX post_thread_index ON post USING btree (thread);
 
 
 --
--- TOC entry 2172 (class 1259 OID 39904)
+-- TOC entry 2173 (class 1259 OID 40621)
 -- Name: thread_id_index; Type: INDEX; Schema: public; Owner: vlad
 --
 
@@ -614,7 +616,7 @@ CREATE INDEX thread_id_index ON thread USING btree (id);
 
 
 --
--- TOC entry 2173 (class 1259 OID 40153)
+-- TOC entry 2174 (class 1259 OID 40622)
 -- Name: thread_lower_forum_created_index; Type: INDEX; Schema: public; Owner: vlad
 --
 
@@ -622,7 +624,15 @@ CREATE INDEX thread_lower_forum_created_index ON thread USING btree (lower((foru
 
 
 --
--- TOC entry 2174 (class 1259 OID 39905)
+-- TOC entry 2175 (class 1259 OID 40940)
+-- Name: thread_lower_forum_index; Type: INDEX; Schema: public; Owner: vlad
+--
+
+CREATE INDEX thread_lower_forum_index ON thread USING btree (lower((forum)::text));
+
+
+--
+-- TOC entry 2176 (class 1259 OID 40623)
 -- Name: thread_lower_slug_index; Type: INDEX; Schema: public; Owner: vlad
 --
 
@@ -630,7 +640,7 @@ CREATE INDEX thread_lower_slug_index ON thread USING btree (lower((slug)::text))
 
 
 --
--- TOC entry 2179 (class 1259 OID 39906)
+-- TOC entry 2181 (class 1259 OID 40624)
 -- Name: thread_votes_index; Type: INDEX; Schema: public; Owner: vlad
 --
 
@@ -638,7 +648,7 @@ CREATE INDEX thread_votes_index ON thread_votes USING btree (lower((nickname)::t
 
 
 --
--- TOC entry 2186 (class 1259 OID 39907)
+-- TOC entry 2188 (class 1259 OID 40625)
 -- Name: user_account_lower_email_index; Type: INDEX; Schema: public; Owner: vlad
 --
 
@@ -646,7 +656,7 @@ CREATE INDEX user_account_lower_email_index ON user_account USING btree (lower((
 
 
 --
--- TOC entry 2187 (class 1259 OID 39908)
+-- TOC entry 2189 (class 1259 OID 40626)
 -- Name: user_account_lower_nickname_index; Type: INDEX; Schema: public; Owner: vlad
 --
 
@@ -654,7 +664,7 @@ CREATE INDEX user_account_lower_nickname_index ON user_account USING btree (lowe
 
 
 --
--- TOC entry 2204 (class 2620 OID 38029)
+-- TOC entry 2199 (class 2620 OID 40627)
 -- Name: post trigger_create_path_post; Type: TRIGGER; Schema: public; Owner: vlad
 --
 

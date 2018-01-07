@@ -81,20 +81,22 @@ public class UserDAO {
         if (desc == null) {
             desc = false;
         }
-        List<User> result = template.query("select DISTINCT user_account.* " +
-                    " from thread join forum on (lower(thread.forum) = lower(forum.slug)) " +
-                    "left join post on (post.thread = thread.id) " +
-                    "join user_account on (lower(post.author) = lower(user_account.nickname) or lower(thread.author) = lower(user_account.nickname)) " +
-                    "where lower(forum.slug)=lower(?) " + ((since != null && desc == true) ? "AND lower(user_account.nickname) < lower(?)  " : "") +
+       List<User> result = template.query("select * " +
+                    " from user_account join" +
+               " (select author from thread Where lower(forum) = lower(?) " +
+               "UNION select author from post Where lower(forum) = lower(?)) as t_p " +
+               "ON lower(t_p.author) = lower(user_account.nickname) " +
+                     ((since != null && desc == true) ? "AND lower(user_account.nickname) < lower(?)  " : "") +
                     ((since != null && desc == false) ? "AND lower(user_account.nickname) > lower(?) " : "") +
                     "ORDER BY user_account.nickname " + ((desc == true) ? "desc " : "asc ") +
                     "LIMIT ?", ps -> {
                 ps.setString(1, forumSlug);
+                ps.setString(2,forumSlug);
                 if (since != null) {
-                    ps.setString(2, since);
-                    ps.setLong(3, limit.longValue());
+                    ps.setString(3, since);
+                    ps.setLong(4, limit.longValue());
                 } else {
-                    ps.setLong(2, limit.longValue());
+                    ps.setLong(3, limit.longValue());
                 }
 
         }, USER_MAPPER);
