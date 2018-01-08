@@ -83,20 +83,19 @@ public class UserDAO {
         }
        List<User> result = template.query("select * " +
                     " from user_account join" +
-               " (select author from thread Where lower(forum) = lower(?) " +
-               "UNION select author from post Where lower(forum) = lower(?)) as t_p " +
-               "ON lower(t_p.author) = lower(user_account.nickname) " +
+               " users_forum " +
+               "ON lower(users_forum.user_nickname) = lower(user_account.nickname) " +
+               "WHERE lower(users_forum.forum) = lower(?) " +
                      ((since != null && desc == true) ? "AND lower(user_account.nickname) < lower(?)  " : "") +
                     ((since != null && desc == false) ? "AND lower(user_account.nickname) > lower(?) " : "") +
                     "ORDER BY user_account.nickname " + ((desc == true) ? "desc " : "asc ") +
                     "LIMIT ?", ps -> {
                 ps.setString(1, forumSlug);
-                ps.setString(2,forumSlug);
                 if (since != null) {
-                    ps.setString(3, since);
-                    ps.setLong(4, limit.longValue());
-                } else {
+                    ps.setString(2, since);
                     ps.setLong(3, limit.longValue());
+                } else {
+                    ps.setLong(2, limit.longValue());
                 }
 
         }, USER_MAPPER);

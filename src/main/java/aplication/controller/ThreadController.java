@@ -6,7 +6,6 @@ import aplication.model.Thread;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -16,7 +15,6 @@ import javax.validation.Valid;
 import javax.validation.constraints.DecimalMax;
 import javax.validation.constraints.DecimalMin;
 import java.math.BigInteger;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -73,7 +71,7 @@ public class ThreadController {
         } catch (DataIntegrityViolationException ex) {
           return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel("Can't find post author by nickname"));
         } catch (RuntimeException ex) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorModel("Can't find parent post "));
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorModel(ex.getMessage()));
         }
 
     }

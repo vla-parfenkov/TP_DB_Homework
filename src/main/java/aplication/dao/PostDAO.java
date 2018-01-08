@@ -5,24 +5,19 @@ import aplication.model.Thread;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigInteger;
+
 import java.math.BigInteger;
 import java.sql.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Service
-@Transactional
 public class PostDAO {
     private final JdbcTemplate template;
-    private static final AtomicLong POST_ID_GENERATOR = new AtomicLong(1);;
+    private static final AtomicLong POST_ID_GENERATOR = new AtomicLong(0);;
 
     @Autowired
     public PostDAO(JdbcTemplate template) {
@@ -109,7 +104,7 @@ public class PostDAO {
         }
 
 
-        if (POST_ID_GENERATOR.get() == 1) {
+        if (POST_ID_GENERATOR.get() == 0) {
             final BigInteger nextval = template.queryForObject("select nextval('post_id_seq'::regclass)",
                     BigInteger.class);
             if (nextval != null) {
@@ -154,8 +149,8 @@ public class PostDAO {
 
 
    public List<Post> getPostByThread (BigInteger threadId, BigInteger limit, BigInteger since, String sort, Boolean desc) {
-        String sql = "select post.*" +
-                " from post ";
+        String sql = "select *" +
+                " from ";
 
         if (desc == null)  {
             desc = false;
@@ -163,9 +158,9 @@ public class PostDAO {
 
        switch(sort) {
            case "flat":
-               sql = sql + "where thread=? " +
-                       ((since != null && desc == true) ? "AND id < ?" : "") +
-                       ((since != null && desc == false) ? "AND id > ?" : "");
+               sql = sql + " post where thread=? " +
+                       ((since != null && desc == true) ? "AND id < ? " : "") +
+                       ((since != null && desc == false) ? "AND id > ?  " : "");
                if (desc) {
                    sql = sql + "ORDER BY created desc, id desc ";
                } else {
@@ -175,29 +170,36 @@ public class PostDAO {
                break;
            case "tree":
                sql = sql +
-                       "where thread=? "+
-                       ((since != null && desc == true) ? "AND path < (SELECT path FROM post WHERE id = ?)" : "") +
-                       ((since != null && desc == false) ? "AND path > (SELECT path From post Where id = ?)" : "");
+                       "post where thread=? "+
+                       ((since != null && desc == true) ? "AND path < (SELECT path from post where id =?) " : "") +
+                       ((since != null && desc == false) ? "AND path > (SELECT path from post where id =?) " : "");
                if (desc) {
-                   sql = sql + "ORDER BY path desc, id desc ";
+                   sql = sql + "ORDER BY path desc ";
                } else {
-                   sql = sql + "ORDER BY path, id ";
+                   sql = sql + "ORDER BY path ";
                }
                sql = sql + "LIMIT ?";
                break;
            case "parent_tree":
-               sql = sql + "where cardinality(array_positions((SELECT array_agg(f.p) FROM (SELECT path[1] as p FROM post WHERE thread = ? " +
-                       "AND parent = 0 ";
-               sql = sql + ((since != null && desc == true) ? "AND path < (SELECT path FROM post WHERE id = ?)" : "") +
-                       ((since != null && desc == false) ? "AND path > (SELECT path From post Where id = ?)" : "");
+               sql = sql + "(" +
+                       "select post.*, dense_rank() OVER (ORDER BY subpath(path,0,1) ";
+
                if (desc) {
-                   sql = sql + "ORDER BY id desc " +
-                           "LIMIT ?) as f), path[1])) > 0 "
-                           + "ORDER BY path[0], path desc, id ";
+                   sql = sql + "desc) as parent_limit " +
+                           "from post " +
+                           "WHERE thread = ? " +
+                           ((since != null) ? "AND path < (SELECT path from post where id =?) " : "") +
+                           ") as r " +
+                           "WHERE (r.parent_limit <= ?)  " +
+                           "ORDER BY path desc ";
                } else {
-                   sql = sql + "ORDER BY id " +
-                           "LIMIT ?) as f), path[1])) > 0 "
-                           + "ORDER BY path[0], path, id ";
+                   sql = sql + " ) as parent_limit " +
+                           "from post " +
+                           "WHERE thread = ? " +
+                           ((since != null) ? "AND path > (SELECT path from post where id =?) " : "") +
+                           ") as r " +
+                           "WHERE (r.parent_limit <= ?)  " +
+                           "ORDER BY path ";
                }
                break;
            default:
