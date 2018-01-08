@@ -7,17 +7,16 @@ import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 
 import java.math.BigInteger;
 import java.sql.*;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 public class PostDAO {
     private final JdbcTemplate template;
-    private static final AtomicLong POST_ID_GENERATOR = new AtomicLong(0);;
 
     @Autowired
     public PostDAO(JdbcTemplate template) {
@@ -104,19 +103,16 @@ public class PostDAO {
         }
 
 
-        if (POST_ID_GENERATOR.get() == 0) {
-            final BigInteger nextval = template.queryForObject("select nextval('post_id_seq'::regclass)",
+        final BigInteger nextval = template.queryForObject("select nextval('post_id_seq'::regclass)",
                     BigInteger.class);
-            if (nextval != null) {
-                POST_ID_GENERATOR.set(nextval.longValue());
-            }
-        }
 
         template.query("select setval('post_id_seq'::regclass, ?) as setval",
-                ps -> ps.setLong(1, POST_ID_GENERATOR.get() + posts.size()), SETVAL_MAPPER);
+                ps -> ps.setLong(1, nextval.longValue() + posts.size()), SETVAL_MAPPER);
 
+        int inc = 0;
         for (Post post: posts) {
-            post.setId(BigInteger.valueOf(POST_ID_GENERATOR.getAndIncrement()));
+            post.setId(BigInteger.valueOf(nextval.longValue() + inc));
+            inc++;
         }
 
 
@@ -174,9 +170,9 @@ public class PostDAO {
                        ((since != null && desc == true) ? "AND path < (SELECT path from post where id =?) " : "") +
                        ((since != null && desc == false) ? "AND path > (SELECT path from post where id =?) " : "");
                if (desc) {
-                   sql = sql + "ORDER BY path desc ";
+                   sql = sql + "ORDER BY string_to_array(ltree2text(path),'.')::integer[] desc ";
                } else {
-                   sql = sql + "ORDER BY path ";
+                   sql = sql + "ORDER BY string_to_array(ltree2text(path),'.')::integer[] ";
                }
                sql = sql + "LIMIT ?";
                break;

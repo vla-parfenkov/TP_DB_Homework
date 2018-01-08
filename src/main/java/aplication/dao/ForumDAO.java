@@ -72,6 +72,15 @@ public class ForumDAO {
 
     }
 
+    public void setPosts(String slug, Integer postsCount) {
+        template.update("UPDATE forum SET posts = posts + ? WHERE lower(slug) = lower(?)",
+                ps -> {
+                    ps.setInt(1, postsCount);
+                    ps.setString(2, slug);
+                });
+
+    }
+
 
 
 }

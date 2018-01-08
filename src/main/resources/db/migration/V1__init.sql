@@ -141,35 +141,7 @@ $$;
 
 ALTER FUNCTION public.create_path_post() OWNER TO vlad;
 
---
--- TOC entry 323 (class 1255 OID 43114)
--- Name: process_increment_post_forum(); Type: FUNCTION; Schema: public; Owner: vlad
---
 
-CREATE FUNCTION process_increment_post_forum() RETURNS trigger
-LANGUAGE plpgsql
-AS $$
-BEGIN
-  IF (TG_OP = 'DELETE') THEN
-    UPDATE forum SET posts = posts - 1
-    WHERE lower(slug) = lower(OLD.forum);
-    RETURN OLD;
-  ELSIF (TG_OP = 'INSERT') THEN
-    UPDATE forum SET posts = posts + 1
-    WHERE lower(slug) = lower(NEW.forum);
-    RETURN NEW;
-  END IF;
-  RETURN NULL;
-END;
-$$;
-
-
-ALTER FUNCTION public.process_increment_post_forum() OWNER TO vlad;
-
---
--- TOC entry 248 (class 1255 OID 41257)
--- Name: process_increment_thread_forum(); Type: FUNCTION; Schema: public; Owner: vlad
---
 
 CREATE FUNCTION process_increment_thread_forum() RETURNS trigger
 LANGUAGE plpgsql
@@ -795,13 +767,6 @@ CREATE TRIGGER trigger_add_thread AFTER INSERT ON thread FOR EACH ROW EXECUTE PR
 
 CREATE TRIGGER trigger_create_path_post BEFORE INSERT ON post FOR EACH ROW EXECUTE PROCEDURE create_path_post();
 
-
---
--- TOC entry 2368 (class 2620 OID 43115)
--- Name: post trigger_inc_post_forum; Type: TRIGGER; Schema: public; Owner: vlad
---
-
-CREATE TRIGGER trigger_inc_post_forum AFTER INSERT OR DELETE ON post FOR EACH ROW EXECUTE PROCEDURE process_increment_post_forum();
 
 
 --

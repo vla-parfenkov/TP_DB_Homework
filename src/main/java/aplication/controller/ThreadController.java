@@ -67,6 +67,7 @@ public class ThreadController {
         }
         try {
             List<Post> posts = dbPost.createPost(postData, thread.getId());
+            dbForum.setPosts(thread.getForum(), posts.size());
             return ResponseEntity.status(HttpStatus.CREATED).body(posts);
         } catch (DataIntegrityViolationException ex) {
           return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel("Can't find post author by nickname"));
