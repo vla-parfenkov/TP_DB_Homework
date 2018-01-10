@@ -1,7 +1,11 @@
 package aplication.dao;
 
+import aplication.model.ErrorModel;
+import aplication.model.Thread;
 import aplication.model.Vote;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -24,6 +28,7 @@ public class VoteDAO {
 
 
     public Vote createVote(String nickname, Integer voice, BigInteger thread) {
+
         template.update("insert into thread_votes(nickname, thread, voice)" + " values(?,?,?)", ps ->{
             ps.setString(1, nickname);
             ps.setLong(2, thread.longValue());

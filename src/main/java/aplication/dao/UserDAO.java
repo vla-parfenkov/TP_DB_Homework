@@ -1,8 +1,10 @@
 package aplication.dao;
 
+import aplication.model.Forum;
 import aplication.model.Thread;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -13,7 +15,10 @@ import aplication.model.User;
 
 import java.math.BigInteger;
 import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @Transactional
@@ -31,7 +36,7 @@ public class UserDAO {
         GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
         template.update(con -> {
             PreparedStatement pst = con.prepareStatement(
-                    "insert into user_account(nickname, email, fullname, about)" + " values(?,?,?,?)" + " returning id",
+                    "insert into user_account(nickname, email, fullname, about, forums)" + " values(?,?,?,?,ARRAY[0])" + " returning id",
                     PreparedStatement.RETURN_GENERATED_KEYS);
             pst.setString(1, nickname);
             pst.setString(2, email);
@@ -77,20 +82,16 @@ public class UserDAO {
     }
 
 
-    public List<User> getUserByForum (String forumSlug, BigInteger limit, String since, Boolean desc) {
+    public List<User> getUserByForum (Integer forumId, BigInteger limit, String since, Boolean desc) {
         if (desc == null) {
             desc = false;
         }
-       List<User> result = template.query("select * " +
-                    " from user_account join" +
-               " users_forum " +
-               "ON lower(users_forum.user_nickname) = lower(user_account.nickname) " +
-               "WHERE lower(users_forum.forum) = lower(?) " +
+       List<User> result = template.query("Select * From user_account WHERE forums @> ARRAY[?] " +
                      ((since != null && desc == true) ? "AND lower(user_account.nickname) < lower(?)  " : "") +
                     ((since != null && desc == false) ? "AND lower(user_account.nickname) > lower(?) " : "") +
                     "ORDER BY user_account.nickname " + ((desc == true) ? "desc " : "asc ") +
                     "LIMIT ?", ps -> {
-                ps.setString(1, forumSlug);
+                ps.setInt(1, forumId);
                 if (since != null) {
                     ps.setString(2, since);
                     ps.setLong(3, limit.longValue());
@@ -110,6 +111,41 @@ public class UserDAO {
             ps.setString(2, userData.getEmail());
             ps.setString(3, userData.getFullname());
             ps.setString(4, nickname);});
+    }
+
+    public void setForumToUsers(String nickname, Integer forum){
+        template.update("UPDATE user_account SET forums = forums || ? WHERE lower(nickname) = lower(?) " +
+                        "AND NOT forums @> ARRAY[?]  ",
+                ps -> {
+                    ps.setInt(1, forum);
+                    ps.setString(2, nickname);
+                    ps.setInt(3, forum);});
+    }
+
+    public void setForumToAuthorPost(Set<String> nicknames, Integer forum){
+        if(nicknames.isEmpty()) {
+            return;
+        }
+
+
+        List<String> author = new ArrayList<>(nicknames);
+
+        String sql = "UPDATE user_account SET forums = forums || ? WHERE lower(nickname) = lower(?) " +
+                "AND NOT forums @> ARRAY[?] ";
+        template.batchUpdate(sql, new BatchPreparedStatementSetter() {
+
+            @Override
+            public void setValues(PreparedStatement ps, int i) throws SQLException {
+                ps.setInt(1, forum);
+                ps.setString(2, author.get(i));
+                ps.setInt(3, forum);
+            }
+
+            @Override
+            public int getBatchSize() {
+                return author.size();
+            }
+        });
     }
 
 

@@ -12,7 +12,11 @@ import java.time.OffsetDateTime;
 import java.util.List;
 
 import aplication.model.Thread;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+@Service
+@Transactional
 public class ThreadDAO {
     private final JdbcTemplate template;
 
@@ -133,7 +137,58 @@ public class ThreadDAO {
         });
     }
 
+   /* public Thread setVotes(String slugOrId, Integer voice) {
+        BigInteger threadId;
+        try {
+            threadId = BigInteger.valueOf(Long.valueOf(slugOrId).longValue());
+        } catch (NumberFormatException ex){
+            threadId = null;
+        }
+        final BigInteger id = threadId;
+        List<Thread> result = template.query("UPDATE thread SET votes = votes + ? " +
+                        ((id == null) ? "where lower(slug)=lower(?) " : "where id=? ") +
+                        "RETURNING *",
+                    ps -> {
+                        ps.setInt(1, voice);
+                        if (id == null) {
+                            ps.setString(2, slugOrId);
+                        } else {
+                            ps.setLong(2, id.longValue());
+                        }
 
+                    },
+                    THREAD_MAPPER);
 
+        if (result.isEmpty()) {
+            return null;
+        }
+        return result.get(0);
+    }
+
+    public Thread getThreadBySlugOrId (String slugOrId){
+        BigInteger threadId;
+        try {
+            threadId = BigInteger.valueOf(Long.valueOf(slugOrId).longValue());
+        } catch (NumberFormatException ex){
+            threadId = null;
+        }
+        final BigInteger id = threadId;
+        List<Thread> result = template.query("SELECT * FROM thread " +
+                        ((id == null) ? "where lower(slug)=lower(?) " : "where id=? "),
+                ps -> {
+                    if (id == null) {
+                        ps.setString(1, slugOrId);
+                    } else {
+                        ps.setLong(1, id.longValue());
+                    }
+
+                },
+                THREAD_MAPPER);
+        if (result.isEmpty()) {
+            return null;
+        }
+        return result.get(0);
+
+    }*/
 
 }

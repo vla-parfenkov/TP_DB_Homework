@@ -18,7 +18,10 @@ import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 @RestController
 @RequestMapping(path = "/api/thread")
@@ -58,16 +61,14 @@ public class ThreadController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel("Can't find thread with id " + slugOrId));
             }
         }
-        final OffsetDateTime offsetDateTime = OffsetDateTime.now();
-        for (Post post:postData) {
-            post.setCreated(Timestamp.valueOf(offsetDateTime.atZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime()));
-            post.setThread(thread.getId());
-            post.setIsEdited(false);
-            post.setForum(thread.getForum());
-        }
+
         try {
-            List<Post> posts = dbPost.createPost(postData, thread.getId());
-            dbForum.setPosts(thread.getForum(), posts.size());
+            List<Post> posts = dbPost.createPost(postData, thread);
+            Set<String> author = new TreeSet<>();
+            for (Post post: posts) {
+                author.add(post.getAuthor());
+            }
+            dbUser.setForumToAuthorPost(author, dbForum.setPosts(thread.getForum(), posts.size()).getId().intValue());
             return ResponseEntity.status(HttpStatus.CREATED).body(posts);
         } catch (DataIntegrityViolationException ex) {
           return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel("Can't find post author by nickname"));
@@ -80,7 +81,7 @@ public class ThreadController {
    @RequestMapping(method = RequestMethod.POST, path = "/{slug_or_id}/vote")
     public ResponseEntity vote(@RequestBody Vote vote, @PathVariable(value = "slug_or_id") String slugOrId,
                                 @RequestHeader(value = "Accept", required = false) String accept) {
-       Thread thread;
+       Thread thread = null;
        BigInteger threadId = null;
        try {
            threadId = BigInteger.valueOf(Long.valueOf(slugOrId).longValue());

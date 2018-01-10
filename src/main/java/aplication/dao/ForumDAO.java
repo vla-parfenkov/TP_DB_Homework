@@ -2,6 +2,8 @@ package aplication.dao;
 
 
 import aplication.model.Forum;
+import aplication.model.User;
+import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,6 +15,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 
 import java.math.BigInteger;
 import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.List;
 
 @Service
@@ -72,13 +75,31 @@ public class ForumDAO {
 
     }
 
-    public void setPosts(String slug, Integer postsCount) {
-        template.update("UPDATE forum SET posts = posts + ? WHERE lower(slug) = lower(?)",
+    public Forum setPosts(String slug, Integer postsCount) {
+        List<Forum> result = template.query("UPDATE forum SET posts = posts + ? WHERE lower(slug) = lower(?) RETURNING *",
                 ps -> {
                     ps.setInt(1, postsCount);
                     ps.setString(2, slug);
-                });
+                }, FORUM_MAPPER);
+                if (result.isEmpty()) {
+                    return null;
+                }
+                return result.get(0);
+    }
 
+  public Forum incThreads(String slug) {
+        List<Forum> result = template.query("UPDATE forum SET threads = threads + 1 WHERE lower(slug) = lower(?) RETURNING *",
+                ps -> ps.setString(1, slug), FORUM_MAPPER);
+        if (result.isEmpty()) {
+            return null;
+        }
+        return result.get(0);
+
+    }
+
+    public void decThreads(String slug) {
+        template.update("UPDATE forum SET threads = threads - 1 WHERE lower(slug) = lower(?)",
+                ps -> ps.setString(1, slug));
     }
 
 

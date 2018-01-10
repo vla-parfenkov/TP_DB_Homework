@@ -64,7 +64,7 @@ public class ForumController {
     public ResponseEntity createThread(@RequestBody Thread threadData,  @PathVariable(value = "slug") String slug,
                                       @RequestHeader(value = "Accept", required = false) String accept) {
         Forum forum = dbForum.getForumBySlug(slug);
-        if(forum == null) {
+        if (forum == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel("Can't find forum with slug " + slug));
         }
         try {
@@ -74,11 +74,12 @@ public class ForumController {
                     threadData.getCreated(),
                     forum.getSlug(),
                     threadData.getMessage());
+            dbUser.setForumToUsers(threadData.getAuthor(), forum.getId().intValue());
             return ResponseEntity.status(HttpStatus.CREATED).body(thread);
         } catch (DuplicateKeyException ex) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(dbThread.getThreadBySlug(threadData.getSlug()));
         } catch (DataIntegrityViolationException ex) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel("Can't find user with nickname " + threadData.getAuthor()));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel(ex.getMessage()));
         }
 
     }
@@ -121,13 +122,14 @@ public class ForumController {
                                           @DecimalMin("1") @DecimalMax("10000") @Valid @RequestParam(value = "limit", required = false, defaultValue="100") BigInteger limit,
                                           @Valid @RequestParam(value = "since", required = false) String since,
                                           @Valid @RequestParam(value = "desc", required = false, defaultValue = "false") Boolean desc,
-                                          @RequestHeader(value = "Accept", required = false) String accept) {
 
-        if(dbForum.getForumBySlug(slug) == null) {
+                                          @RequestHeader(value = "Accept", required = false) String accept) {
+        Forum forum = dbForum.getForumBySlug(slug);
+        if(forum == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel("Can't find forum with slug " + slug));
         }
 
-        List<User> users = dbUser.getUserByForum(slug, limit, since, desc);
+        List<User> users = dbUser.getUserByForum(forum.getId().intValue(), limit, since, desc);
         return ResponseEntity.status(HttpStatus.OK).body(users);
 
     }

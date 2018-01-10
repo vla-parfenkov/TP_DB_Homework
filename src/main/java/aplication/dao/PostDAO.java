@@ -12,16 +12,22 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigInteger;
 import java.sql.*;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
+@Transactional
 public class PostDAO {
     private final JdbcTemplate template;
+
 
     @Autowired
     public PostDAO(JdbcTemplate template) {
         this.template = template;
-
     }
 
     private static final RowMapper<Post> POST_MAPPER = (res, num) -> {
@@ -97,22 +103,20 @@ public class PostDAO {
 
 
 
-    public List<Post> createPost (List<Post> posts, BigInteger threadId ) {
+    public List<Post> createPost (List<Post> posts, Thread thread ) {
         if(posts.isEmpty()) {
             return posts;
         }
 
 
-        final BigInteger nextval = template.queryForObject("select nextval('post_id_seq'::regclass)",
-                    BigInteger.class);
 
-        template.query("select setval('post_id_seq'::regclass, ?) as setval",
-                ps -> ps.setLong(1, nextval.longValue() + posts.size()), SETVAL_MAPPER);
-
-        int inc = 0;
-        for (Post post: posts) {
-            post.setId(BigInteger.valueOf(nextval.longValue() + inc));
-            inc++;
+        final OffsetDateTime offsetDateTime = OffsetDateTime.now();
+        for (Post post:posts) {
+            post.setId(template.queryForObject("select nextval('post_id_seq'::regclass)", BigInteger.class));
+            post.setCreated(Timestamp.valueOf(offsetDateTime.atZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime()));
+            post.setThread(thread.getId());
+            post.setIsEdited(false);
+            post.setForum(thread.getForum());
         }
 
 
@@ -170,15 +174,15 @@ public class PostDAO {
                        ((since != null && desc == true) ? "AND path < (SELECT path from post where id =?) " : "") +
                        ((since != null && desc == false) ? "AND path > (SELECT path from post where id =?) " : "");
                if (desc) {
-                   sql = sql + "ORDER BY string_to_array(ltree2text(path),'.')::integer[] desc ";
+                   sql = sql + "ORDER BY path desc ";
                } else {
-                   sql = sql + "ORDER BY string_to_array(ltree2text(path),'.')::integer[] ";
+                   sql = sql + "ORDER BY path ";
                }
                sql = sql + "LIMIT ?";
                break;
            case "parent_tree":
                sql = sql + "(" +
-                       "select post.*, dense_rank() OVER (ORDER BY subpath(path,0,1) ";
+                       "select post.*, dense_rank() OVER (ORDER BY subarray(path,0,1) ";
 
                if (desc) {
                    sql = sql + "desc) as parent_limit " +
@@ -267,6 +271,7 @@ public class PostDAO {
                     ps.setLong(2, id.longValue());
                 });
     }
+
 
 
 
