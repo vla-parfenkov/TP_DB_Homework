@@ -6,50 +6,50 @@ import java.math.BigInteger;
 
 public class ServiceModel {
     @JsonProperty("forum")
-    private BigInteger forum;
+    private Integer forum;
     @JsonProperty("post")
-    private BigInteger post;
+    private Integer post;
     @JsonProperty("thread")
-    private BigInteger thread;
+    private Integer thread;
     @JsonProperty("user")
-    private BigInteger user;
+    private Integer user;
 
-    public ServiceModel(BigInteger forum, BigInteger post, BigInteger thread, BigInteger user) {
+    public ServiceModel(Integer forum, Integer post, Integer thread, Integer user) {
         this.forum = forum;
         this.post = post;
         this.thread = thread;
         this.user = user;
     }
 
-    public BigInteger getForum() {
+    public Integer getForum() {
         return forum;
     }
 
-    public void setForum(BigInteger forum) {
+    public void setForum(Integer forum) {
         this.forum = forum;
     }
 
-    public BigInteger getPost() {
+    public Integer getPost() {
         return post;
     }
 
-    public void setPost(BigInteger post) {
+    public void setPost(Integer post) {
         this.post = post;
     }
 
-    public BigInteger getThread() {
+    public Integer getThread() {
         return thread;
     }
 
-    public void setThread(BigInteger thread) {
+    public void setThread(Integer thread) {
         this.thread = thread;
     }
 
-    public BigInteger getUser() {
+    public Integer getUser() {
         return user;
     }
 
-    public void setUser(BigInteger user) {
+    public void setUser(Integer user) {
         this.user = user;
     }
 }

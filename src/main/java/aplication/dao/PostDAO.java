@@ -10,13 +10,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 
-import java.math.BigInteger;
+
 import java.sql.*;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -37,12 +34,12 @@ public class PostDAO {
             author = null;
         }
 
-        BigInteger thread = BigInteger.valueOf(res.getLong("thread"));
+        Integer thread = res.getInt("thread");
         if (res.wasNull()) {
             thread = null;
         }
 
-        BigInteger parent = BigInteger.valueOf(res.getLong("parent"));
+        Integer parent = res.getInt("parent");
         if (res.wasNull()){
             parent = null;
         }
@@ -52,7 +49,7 @@ public class PostDAO {
             forum = null;
         }
 
-        Post post = new Post(BigInteger.valueOf(res.getLong("id")),
+        Post post = new Post(res.getInt("id"),
                 author,
                 res.getTimestamp("created"),
                 forum,
@@ -66,13 +63,13 @@ public class PostDAO {
     private static final RowMapper<PostFullInfo> POST_FULL_INFO_MAPPER = (res, num) -> {
 
         PostFullInfo post = new PostFullInfo();
-        post.setPost(new Post(BigInteger.valueOf(res.getLong("id")),
+        post.setPost(new Post(res.getInt("id"),
                 res.getString("author"),
                 res.getTimestamp("created"),
                 res.getString("forum"),
                 res.getString("message"),
-                BigInteger.valueOf(res.getLong("parent")),
-                BigInteger.valueOf(res.getLong("thread"))
+                res.getInt("parent"),
+                res.getInt("thread")
         ));
         post.getPost().setIsEdited(res.getBoolean("isedited"));
         post.setAuthor(new User(res.getString("about"),
@@ -86,20 +83,17 @@ public class PostDAO {
                 res.getString("threadmessage"),
                 res.getString("threadslug"),
                 res.getString("title")));
-        post.getThread().setId(BigInteger.valueOf(res.getLong("thread")));
+        post.getThread().setId(res.getInt("thread"));
         post.getThread().setVotes(res.getInt("votes"));
-        post.setForum(new Forum(BigInteger.valueOf(res.getLong("fid")),
-                BigInteger.valueOf(res.getLong("posts")),
-                BigInteger.valueOf(res.getLong("threads")),
+        post.setForum(new Forum(res.getInt("fid"),
+                res.getInt("posts"),
+                res.getInt("threads"),
                 res.getString("forum"),
                 res.getString("forumtitle"),
                 res.getString("user_moderator")));
         return post;
     };
-
-    private static final RowMapper<BigInteger> SETVAL_MAPPER = (res, num) -> {
-        return BigInteger.valueOf(res.getLong("setval"));
-    };
+    
 
 
 
@@ -112,7 +106,7 @@ public class PostDAO {
 
         final OffsetDateTime offsetDateTime = OffsetDateTime.now();
         for (Post post:posts) {
-            post.setId(template.queryForObject("select nextval('post_id_seq'::regclass)", BigInteger.class));
+            post.setId(template.queryForObject("select nextval('post_id_seq'::regclass)", Integer.class));
             post.setCreated(Timestamp.valueOf(offsetDateTime.atZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime()));
             post.setThread(thread.getId());
             post.setIsEdited(false);
@@ -126,13 +120,13 @@ public class PostDAO {
 
                 @Override
                 public void setValues(PreparedStatement ps, int i) throws SQLException {
-                    ps.setLong(1, posts.get(i).getId().longValue());
+                    ps.setInt(1, posts.get(i).getId());
                     ps.setTimestamp(2, posts.get(i).getCreated());
                     ps.setString(3, posts.get(i).getMessage());
                     ps.setBoolean(4, posts.get(i).getIsEdited());
                     ps.setString(5, posts.get(i).getAuthor());
-                    ps.setLong(6, posts.get(i).getThread().longValue() );
-                    ps.setLong(7,  posts.get(i).getParent().longValue());
+                    ps.setInt(6, posts.get(i).getThread() );
+                    ps.setInt(7,  posts.get(i).getParent());
                     ps.setString(8, posts.get(i).getForum());
                 }
 
@@ -148,7 +142,7 @@ public class PostDAO {
     }
 
 
-   public List<Post> getPostByThread (BigInteger threadId, BigInteger limit, BigInteger since, String sort, Boolean desc) {
+   public List<Post> getPostByThread (Integer threadId, Integer limit, Integer since, String sort, Boolean desc) {
         String sql = "select *" +
                 " from ";
 
@@ -210,20 +204,20 @@ public class PostDAO {
 
 
         List<Post> result = template.query( sql, ps -> {
-            ps.setLong(1, threadId.longValue());
+            ps.setInt(1, threadId);
             if(since == null) {
-                ps.setLong(2, limit.longValue());
+                ps.setInt(2, limit);
             } else {
-                ps.setLong(2, since.longValue());
-                ps.setLong(3, limit.longValue());
+                ps.setInt(2, since);
+                ps.setInt(3, limit);
             }
 
         }, POST_MAPPER);
         return result;
     }
 
-    public Post getPostById (BigInteger id) {
-        List<Post> result = template.query("select * from post where id=?", ps -> ps.setLong(1, id.longValue()), POST_MAPPER);
+    public Post getPostById (Integer id) {
+        List<Post> result = template.query("select * from post where id=?", ps -> ps.setInt(1, id), POST_MAPPER);
         if (result.isEmpty()) {
             return null;
         }
@@ -231,7 +225,7 @@ public class PostDAO {
 
     }
 
-    public PostFullInfo getPostByIdWithFullInfo (BigInteger id, List<String> related) {
+    public PostFullInfo getPostByIdWithFullInfo (Integer id, List<String> related) {
         List<PostFullInfo> results = template.query("SELECT *, thread.slug as threadslug, " +
                         "thread.author as threadauthor, thread.created as threadcreated," +
                         " thread.message as threadmessage, forum.title as forumtitle, " +
@@ -239,8 +233,8 @@ public class PostDAO {
                 "FROM POST JOIN user_account \n" +
                 "ON (lower(post.author) = lower(user_account.nickname))\n" +
                 "JOIN thread ON (post.thread = thread.id)\n" +
-                "JOIN forum ON (lower(post.forum) = lower(forum.slug))\n" +
-                "WHERE post.id = ? ", ps -> ps.setLong(1, id.longValue()),
+                "JOIN forum ON (lower(thread.forum) = lower(forum.slug))\n" +
+                "WHERE post.id = ? ", ps -> ps.setInt(1, id),
                 POST_FULL_INFO_MAPPER);
         if (results.isEmpty()) {
             return null;
@@ -264,11 +258,11 @@ public class PostDAO {
 
     }
 
-    public void updatePost(String message, BigInteger id){
+    public void updatePost(String message, Integer id){
         template.update("UPDATE post SET message = ?, isedited = true WHERE id = ?",
                 ps -> {
                     ps.setString(1, message);
-                    ps.setLong(2, id.longValue());
+                    ps.setInt(2, id);
                 });
     }
 

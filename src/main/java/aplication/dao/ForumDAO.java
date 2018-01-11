@@ -2,8 +2,7 @@ package aplication.dao;
 
 
 import aplication.model.Forum;
-import aplication.model.User;
-import org.springframework.jdbc.core.BatchPreparedStatementSetter;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,7 +12,6 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 
 
-import java.math.BigInteger;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
@@ -39,7 +37,7 @@ public class ForumDAO {
             pst.setString(3, user);
             return pst;
         }, keyHolder);
-        return new Forum(BigInteger.valueOf(keyHolder.getKey().longValue()),BigInteger.valueOf(0), BigInteger.valueOf(0), slug, title, user);
+        return new Forum(keyHolder.getKey().intValue(),0, 0, slug, title, user);
     }
 
     private static final RowMapper<Forum> FORUM_MAPPER = (res, num) -> {
@@ -49,17 +47,17 @@ public class ForumDAO {
             user = null;
         }
 
-        return new Forum(BigInteger.valueOf(res.getLong("id")),
-                BigInteger.valueOf(res.getLong("posts")),
-                BigInteger.valueOf(res.getLong("threads")),
+        return new Forum(res.getInt("id"),
+                res.getInt("posts"),
+                res.getInt("threads"),
                 res.getString("slug"),
                 res.getString("title"),
                 user);
     };
 
 
-    public Forum getForumbyId (BigInteger id){
-        List<Forum> result = template.query("select * from forum where id=?", ps -> ps.setLong(1, id.longValue()), FORUM_MAPPER);
+    public Forum getForumbyId (Integer id){
+        List<Forum> result = template.query("select * from forum where id=?", ps -> ps.setInt(1, id), FORUM_MAPPER);
         if (result.isEmpty()) {
             return null;
         }

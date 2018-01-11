@@ -7,7 +7,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigInteger;
+
 import java.util.List;
 
 @Service
@@ -22,10 +22,10 @@ public class ServiceDAO {
 
     private static final RowMapper<ServiceModel> SERVICE_MAPPER = (res, num) -> {
 
-        return new ServiceModel(BigInteger.valueOf(res.getLong("forum")),
-                BigInteger.valueOf(res.getLong("post")),
-                BigInteger.valueOf(res.getLong("thread")),
-                BigInteger.valueOf(res.getLong("user")));
+        return new ServiceModel(res.getInt("forum"),
+                res.getInt("post"),
+                res.getInt("thread"),
+                res.getInt("user"));
     };
 
 

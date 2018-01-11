@@ -74,7 +74,7 @@ public class ForumController {
                     threadData.getCreated(),
                     forum.getSlug(),
                     threadData.getMessage());
-            dbUser.setForumToUsers(threadData.getAuthor(), forum.getId().intValue());
+            dbUser.setForumToUsers(threadData.getAuthor(), forum.getId());
             return ResponseEntity.status(HttpStatus.CREATED).body(thread);
         } catch (DuplicateKeyException ex) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(dbThread.getThreadBySlug(threadData.getSlug()));
@@ -99,7 +99,7 @@ public class ForumController {
 
     @RequestMapping(method = RequestMethod.GET, path = "/{slug}/threads")
     public ResponseEntity forumGetThreads(@PathVariable(value = "slug") String slug,
-                                                        @DecimalMin("1") @DecimalMax("10000") @Valid @RequestParam(value = "limit", required = false, defaultValue="100") BigInteger limit,
+                                                        @DecimalMin("1") @DecimalMax("10000") @Valid @RequestParam(value = "limit", required = false, defaultValue="100") Integer limit,
                                                         @Valid @RequestParam(value = "since", required = false) String since,
                                                         @Valid @RequestParam(value = "desc", required = false) Boolean desc,
                                                         @RequestHeader(value = "Accept", required = false) String accept) {
@@ -119,7 +119,7 @@ public class ForumController {
 
     @RequestMapping(method = RequestMethod.GET, path = "/{slug}/users")
     public ResponseEntity forumGetUsers(@PathVariable(value = "slug") String slug,
-                                          @DecimalMin("1") @DecimalMax("10000") @Valid @RequestParam(value = "limit", required = false, defaultValue="100") BigInteger limit,
+                                          @DecimalMin("1") @DecimalMax("10000") @Valid @RequestParam(value = "limit", required = false, defaultValue="100") Integer limit,
                                           @Valid @RequestParam(value = "since", required = false) String since,
                                           @Valid @RequestParam(value = "desc", required = false, defaultValue = "false") Boolean desc,
 
@@ -129,7 +129,7 @@ public class ForumController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel("Can't find forum with slug " + slug));
         }
 
-        List<User> users = dbUser.getUserByForum(forum.getId().intValue(), limit, since, desc);
+        List<User> users = dbUser.getUserByForum(forum.getId(), limit, since, desc);
         return ResponseEntity.status(HttpStatus.OK).body(users);
 
     }

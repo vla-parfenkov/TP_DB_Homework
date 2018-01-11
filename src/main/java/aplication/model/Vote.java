@@ -10,7 +10,7 @@ import java.math.BigInteger;
 public class Vote {
 
     @JsonIgnoreProperties
-    private BigInteger id;
+    private Integer userId;
 
     @JsonProperty("nickname")
     private String nickname;
@@ -19,14 +19,14 @@ public class Vote {
     private Integer voice;
 
     @JsonProperty("thread")
-    private BigInteger thread;
+    private Integer thread;
 
-    public BigInteger getId() {
-        return id;
+    public Integer getUserId() {
+        return userId;
     }
 
-    public void setId(BigInteger id) {
-        this.id = id;
+    public void setUserId(Integer userId) {
+        this.userId = userId;
     }
 
     public String getNickname() {
@@ -45,11 +45,11 @@ public class Vote {
         this.voice = voice;
     }
 
-    public BigInteger getThread() {
+    public Integer getThread() {
         return thread;
     }
 
-    public void setThread(BigInteger thread) {
+    public void setThread(Integer thread) {
         this.thread = thread;
     }
 
@@ -59,7 +59,7 @@ public class Vote {
         this.voice = voice;
     }
 
-    public Vote(String nickname, Integer voice, BigInteger thread) {
+    public Vote(String nickname, Integer voice, Integer thread) {
         this.nickname = nickname;
         this.voice = voice;
         this.thread = thread;

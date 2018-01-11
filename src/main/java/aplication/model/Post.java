@@ -13,7 +13,7 @@ import java.sql.Timestamp;
 public class Post {
 
     @JsonIgnoreProperties
-    private BigInteger id;
+    private Integer id;
 
     @JsonProperty("author")
     private String author;
@@ -32,14 +32,14 @@ public class Post {
     private String message;
 
     @JsonProperty("parent")
-    private BigInteger parent = BigInteger.valueOf(0);
+    private Integer parent = 0;
 
-    public void setId(BigInteger id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
     @JsonProperty("thread")
-    private BigInteger thread;
+    private Integer thread;
 
     public void setAuthor(String author) {
         this.author = author;
@@ -53,11 +53,11 @@ public class Post {
         this.forum = forum;
     }
 
-    public void setParent(BigInteger parent) {
+    public void setParent(Integer parent) {
         this.parent = parent;
     }
 
-    public void setThread(BigInteger thread) {
+    public void setThread(Integer thread) {
         this.thread = thread;
     }
 
@@ -66,7 +66,7 @@ public class Post {
     public Post (@JsonProperty("author") String author,
                  @JsonProperty("message") String message,
                  @JsonProperty(value = "parent",
-                 defaultValue = "0") BigInteger parent) {
+                 defaultValue = "0") Integer parent) {
         this.author = author;
         this.message = message;
         if(parent != null) {
@@ -74,7 +74,7 @@ public class Post {
         }
     }
 
-    public Post(BigInteger id, String author, Timestamp created, String forum, String message, BigInteger parent, BigInteger thread) {
+    public Post(Integer id, String author, Timestamp created, String forum, String message, Integer parent, Integer thread) {
         this.id = id;
         this.author = author;
         this.created = created;
@@ -86,7 +86,7 @@ public class Post {
         this.thread = thread;
     }
 
-    public BigInteger getId() {
+    public Integer getId() {
         return id;
     }
 
@@ -110,11 +110,11 @@ public class Post {
         return isEdited;
     }
 
-    public BigInteger getParent() {
+    public Integer getParent() {
         return parent;
     }
 
-    public BigInteger getThread() {
+    public Integer getThread() {
         return thread;
     }
 

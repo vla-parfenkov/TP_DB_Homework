@@ -14,7 +14,7 @@ import java.time.OffsetDateTime;
 public class Thread {
 
     @JsonIgnoreProperties
-    private BigInteger id;
+    private Integer id;
 
     @JsonProperty("author")
     private final String author;
@@ -36,7 +36,7 @@ public class Thread {
     private String title;
 
     @JsonProperty("votes")
-    private int votes = 0;
+    private Integer votes = 0;
 
 
     public Thread(@JsonProperty("author") String author,
@@ -59,7 +59,7 @@ public class Thread {
     }
 
 
-    public BigInteger getId() {
+    public Integer getId() {
         return id;
     }
 
@@ -99,11 +99,11 @@ public class Thread {
         this.title = title;
     }
 
-    public void setVotes(int votes) {
+    public void setVotes(Integer votes) {
         this.votes = votes;
     }
 
-    public void setId(BigInteger id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 }

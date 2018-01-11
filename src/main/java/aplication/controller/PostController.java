@@ -11,7 +11,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.math.BigInteger;
 import java.util.List;
 
 @RestController
@@ -33,7 +32,7 @@ public class PostController {
     }
 
     @RequestMapping(method = RequestMethod.GET, path = "/{id}/details")
-    public ResponseEntity detailsPost(@PathVariable(value = "id") BigInteger id,
+    public ResponseEntity detailsPost(@PathVariable(value = "id") Integer id,
                                       @Valid @RequestParam(value = "related", required = false) List<String> related) {
 
         PostFullInfo post = new PostFullInfo();
@@ -61,7 +60,7 @@ public class PostController {
     }
 
     @RequestMapping(method = RequestMethod.POST, path = "/{id}/details")
-    public ResponseEntity updatePost(@RequestBody Post postData, @PathVariable(value = "id") BigInteger id) {
+    public ResponseEntity updatePost(@RequestBody Post postData, @PathVariable(value = "id") Integer id) {
         Post post = dbPost.getPostById(id);
         if(post == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel("Can't find post with id "

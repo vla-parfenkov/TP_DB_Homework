@@ -14,11 +14,6 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 import javax.validation.constraints.DecimalMax;
 import javax.validation.constraints.DecimalMin;
-import java.math.BigInteger;
-import java.sql.Timestamp;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -46,9 +41,9 @@ public class ThreadController {
     public ResponseEntity createPost(@RequestBody List<Post> postData, @PathVariable(value = "slug_or_id") String slugOrId,
                                      @RequestHeader(value = "Accept", required = false) String accept) {
         Thread thread = null;
-        BigInteger threadId = null;
+        Integer threadId = null;
         try {
-            threadId = BigInteger.valueOf(Long.valueOf(slugOrId).longValue());
+            threadId = Integer.valueOf(slugOrId);
         } catch (NumberFormatException ex){
             thread = dbThread.getThreadBySlug(slugOrId);
             if (thread == null) {
@@ -81,31 +76,37 @@ public class ThreadController {
    @RequestMapping(method = RequestMethod.POST, path = "/{slug_or_id}/vote")
     public ResponseEntity vote(@RequestBody Vote vote, @PathVariable(value = "slug_or_id") String slugOrId,
                                 @RequestHeader(value = "Accept", required = false) String accept) {
-       Thread thread = null;
-       BigInteger threadId = null;
-       try {
-           threadId = BigInteger.valueOf(Long.valueOf(slugOrId).longValue());
-           thread = dbThread.getThreadById(threadId);
-       } catch (NumberFormatException ex){
-           thread = dbThread.getThreadBySlug(slugOrId);
+       Thread thread = dbThread.getThreadBySlugOrID(slugOrId);
+       if (thread == null) {
+           return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel("Can't find thread"));
        }
-       if(thread == null) {
-           return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel("Can't find thread with id " + threadId));
+       List<User> user = dbUser.getUser(vote.getNickname());
+       Integer userId;
+       if (user == null) {
+           return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel("Can't find user"));
+       } else {
+           userId = user.get(0).getId();
        }
-
-       try {
+       Vote oldVote = dbVote.getVote(userId, thread.getId());
+       if (oldVote == null) {
+           try {
                dbVote.createVote(vote.getNickname(), vote.getVoice(), thread.getId());
                thread.setVotes(thread.getVotes() + vote.getVoice());
                return ResponseEntity.status(HttpStatus.OK).body(thread);
-       } catch (DuplicateKeyException ex) {
-           try {
-                   dbVote.updateVote(vote.getNickname(), vote.getVoice(), thread.getId());
-                   return ResponseEntity.status(HttpStatus.OK).body(dbThread.getThreadById(thread.getId()));
-           } catch (DataIntegrityViolationException dataEx) {
-                   return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel("Can't find thread with id " + threadId));
+           } catch (DataIntegrityViolationException ex) {
+               return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel(ex.getMessage()));
            }
-       } catch (DataIntegrityViolationException ex) {
-           return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel("Can't find author with id " + vote.getNickname()));
+       } else {
+           if (oldVote.getVoice().equals(vote.getVoice())) {
+               return ResponseEntity.status(HttpStatus.OK).body(thread);
+           }
+           try {
+               dbVote.updateVote(oldVote.getUserId(), vote.getVoice(), thread.getId());
+               thread.setVotes(thread.getVotes() + 2 * vote.getVoice());
+               return ResponseEntity.status(HttpStatus.OK).body(thread);
+           } catch (DataIntegrityViolationException ex) {
+               return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel(ex.getMessage()));
+           }
        }
 
     }
@@ -113,9 +114,9 @@ public class ThreadController {
     @RequestMapping(method = RequestMethod.GET, path = "/{slug_or_id}/details")
     public ResponseEntity detailsThread(@PathVariable(value = "slug_or_id") String slugOrId) {
         Thread thread = null;
-        BigInteger threadId = null;
+        Integer threadId = null;
         try {
-            threadId = BigInteger.valueOf(Long.valueOf(slugOrId).longValue());
+            threadId = Integer.valueOf(slugOrId);
         } catch (NumberFormatException ex){
             threadId = null;
 
@@ -136,14 +137,16 @@ public class ThreadController {
 
     @RequestMapping(method = RequestMethod.GET, path = "/{slug_or_id}/posts")
     public ResponseEntity threadGetPosts(@PathVariable(value = "slug_or_id") String slugOrId,
-                                          @DecimalMin("1") @DecimalMax("10000") @Valid @RequestParam(value = "limit", required = false, defaultValue="100") BigInteger limit,
-                                          @Valid @RequestParam(value = "since", required = false) BigInteger since,
+                                          @DecimalMin("1")
+                                          @DecimalMax("10000")
+                                          @Valid @RequestParam(value = "limit", required = false, defaultValue="100") Integer limit,
+                                          @Valid @RequestParam(value = "since", required = false) Integer since,
                                          @Valid @RequestParam(value = "sort", required = false, defaultValue = "flat") String sort,
                                           @Valid @RequestParam(value = "desc", required = false, defaultValue = "false") Boolean desc,
                                           @RequestHeader(value = "Accept", required = false) String accept) {
-        BigInteger threadId;
+        Integer threadId;
         try {
-            threadId = BigInteger.valueOf(Long.valueOf(slugOrId).longValue());
+            threadId = Integer.valueOf(slugOrId);
             if(dbThread.getThreadById(threadId) == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel("Can't find thread with slug_or_id " + slugOrId));
             }
@@ -169,9 +172,9 @@ public class ThreadController {
     @RequestMapping(method = RequestMethod.POST, path = "/{slug_or_id}/details")
     public ResponseEntity updateThread(@RequestBody Thread threadData,@PathVariable(value = "slug_or_id") String slugOrId) {
         Thread thread = null;
-        BigInteger threadId = null;
+        Integer threadId = null;
         try {
-            threadId = BigInteger.valueOf(Long.valueOf(slugOrId).longValue());
+            threadId = Integer.valueOf(slugOrId);
         } catch (NumberFormatException ex){
             threadId = null;
 

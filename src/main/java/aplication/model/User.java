@@ -6,6 +6,7 @@ import java.util.Objects;
 
 @Validated
 public class User {
+    private Integer id;
 
     private String nickname;
 
@@ -26,6 +27,13 @@ public class User {
         this.about = about;
     }
 
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
 
     public String getNickname() {
         return nickname;

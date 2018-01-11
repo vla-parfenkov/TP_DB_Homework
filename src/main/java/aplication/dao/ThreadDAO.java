@@ -5,10 +5,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 
-import java.math.BigInteger;
 import java.sql.PreparedStatement;
 import java.sql.Timestamp;
-import java.time.OffsetDateTime;
 import java.util.List;
 
 import aplication.model.Thread;
@@ -46,7 +44,7 @@ public class ThreadDAO {
             return pst;
         }, keyHolder);
         Thread thread = new Thread(author, created, forum, message, slug, title);
-        thread.setId(BigInteger.valueOf(keyHolder.getKey().longValue()));
+        thread.setId(keyHolder.getKey().intValue());
         return thread;
     }
 
@@ -69,17 +67,17 @@ public class ThreadDAO {
                 res.getString("message"),
                 res.getString("slug"),
                 res.getString("title"));
-        thread.setId(BigInteger.valueOf(res.getLong("id")));
+        thread.setId(res.getInt("id"));
         thread.setVotes(res.getInt("votes"));
         return thread;
     };
 
 
-    public Thread getThreadById (BigInteger id){
+    public Thread getThreadById (Integer id){
         if(id == null) {
             return null;
         }
-        List<Thread> result = template.query("select * from thread where id=?", ps -> ps.setLong(1, id.longValue()), THREAD_MAPPER);
+        List<Thread> result = template.query("select * from thread where id=?", ps -> ps.setInt(1, id), THREAD_MAPPER);
         if (result.isEmpty()) {
             return null;
         }
@@ -108,7 +106,7 @@ public class ThreadDAO {
     }
 
 
-    public List<Thread> getThreadByForum (String forumSlug, BigInteger limit, Timestamp since, Boolean desc) {
+    public List<Thread> getThreadByForum (String forumSlug, Integer limit, Timestamp since, Boolean desc) {
         List<Thread> result = template.query("select thread.*" +
                     " from thread " +
                     "where lower(thread.forum)=lower(?) " + ((since != null && desc != null && desc == true) ? "AND thread.created <= ?" : "") +
@@ -117,10 +115,10 @@ public class ThreadDAO {
                     "LIMIT ?", ps -> {
             ps.setString(1, forumSlug);
             if(since == null) {
-                ps.setLong(2, limit.longValue());
+                ps.setInt(2, limit);
             } else {
                 ps.setTimestamp(2, since);
-                ps.setLong(3, limit.longValue());
+                ps.setLong(3, limit);
             }
 
         }, THREAD_MAPPER);
@@ -133,62 +131,46 @@ public class ThreadDAO {
                 ps -> {
                     ps.setString(1, threadData.getMessage());
                     ps.setString(2, threadData.getTitle());
-                    ps.setLong(3, threadData.getId().longValue());
+                    ps.setInt(3, threadData.getId());
         });
     }
 
-   /* public Thread setVotes(String slugOrId, Integer voice) {
-        BigInteger threadId;
-        try {
-            threadId = BigInteger.valueOf(Long.valueOf(slugOrId).longValue());
-        } catch (NumberFormatException ex){
-            threadId = null;
-        }
-        final BigInteger id = threadId;
-        List<Thread> result = template.query("UPDATE thread SET votes = votes + ? " +
-                        ((id == null) ? "where lower(slug)=lower(?) " : "where id=? ") +
+    public Thread setVotes(Integer id, Integer voice) {
+        List<Thread> result = template.query("UPDATE thread SET votes = votes + ? WHERE id = ? " +
                         "RETURNING *",
-                    ps -> {
-                        ps.setInt(1, voice);
-                        if (id == null) {
-                            ps.setString(2, slugOrId);
-                        } else {
-                            ps.setLong(2, id.longValue());
-                        }
-
-                    },
-                    THREAD_MAPPER);
-
+                ps -> {
+                    ps.setInt(1, voice);
+                    ps.setInt(2, id);
+                }, THREAD_MAPPER);
         if (result.isEmpty()) {
             return null;
         }
         return result.get(0);
+
     }
 
-    public Thread getThreadBySlugOrId (String slugOrId){
-        BigInteger threadId;
+    public Thread getThreadBySlugOrID (String slugOrId) {
+        Integer threadId = null;
         try {
-            threadId = BigInteger.valueOf(Long.valueOf(slugOrId).longValue());
+            threadId = Integer.valueOf(slugOrId);
         } catch (NumberFormatException ex){
             threadId = null;
         }
-        final BigInteger id = threadId;
-        List<Thread> result = template.query("SELECT * FROM thread " +
-                        ((id == null) ? "where lower(slug)=lower(?) " : "where id=? "),
+        final Integer id = threadId;
+        List<Thread> result = template.query("SELECT * FROM thread WHERE " +
+                        ((id == null) ? "lower(slug) = lower(?) " : " id = ? "),
                 ps -> {
                     if (id == null) {
                         ps.setString(1, slugOrId);
                     } else {
-                        ps.setLong(1, id.longValue());
+                        ps.setInt(1, id);
                     }
-
-                },
-                THREAD_MAPPER);
+                }, THREAD_MAPPER);
         if (result.isEmpty()) {
             return null;
         }
         return result.get(0);
 
-    }*/
+    }
 
 }

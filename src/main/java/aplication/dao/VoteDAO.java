@@ -1,19 +1,15 @@
 package aplication.dao;
 
-import aplication.model.ErrorModel;
-import aplication.model.Thread;
+
 import aplication.model.Vote;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigInteger;
-import java.sql.PreparedStatement;
+import java.util.List;
+
 
 @Service
 @Transactional
@@ -26,24 +22,45 @@ public class VoteDAO {
         this.template = template;
     }
 
+    private static final RowMapper<Vote> VOTE_MAPPER = (res, num) -> {
 
-    public Vote createVote(String nickname, Integer voice, BigInteger thread) {
+        Vote voice = new Vote(null,res.getInt("voice"),
+                res.getInt("thread"));
+        voice.setUserId(res.getInt("user_id"));
+        return voice;
+    };
 
-        template.update("insert into thread_votes(nickname, thread, voice)" + " values(?,?,?)", ps ->{
+    public void createVote(String nickname, Integer voice, Integer thread) {
+
+        template.update("insert into thread_votes(user_id, thread, voice)"
+                + " values((SELECT id FROM user_account " +
+                "WHERE lower(nickname) = lower(?)),?,?) ", ps ->{
             ps.setString(1, nickname);
-            ps.setLong(2, thread.longValue());
+            ps.setInt(2, thread);
             ps.setInt(3, voice);
         });
-        return new Vote(nickname, voice, thread);
     }
 
-    public void updateVote(String nickname, Integer voice, BigInteger thread) {
-        template.update("UPDATE thread_votes SET voice = ? WHERE lower(nickname) = lower(?) AND thread = ?",
+    public void updateVote(Integer userId, Integer voice, Integer thread) {
+        template.update("UPDATE thread_votes SET voice = ? WHERE user_id = ? AND thread = ?",
                 ps -> {
                     ps.setInt(1, voice);
-                    ps.setString(2, nickname);
-                    ps.setLong(3, thread.longValue());
+                    ps.setInt(2, userId);
+                    ps.setInt(3, thread);
                 });
 
+    }
+
+    public Vote getVote(Integer user, Integer thread) {
+
+        List<Vote> result = template.query("SELECT * FROM thread_votes " +
+                "WHERE user_id = ? AND thread = ?", ps ->{
+            ps.setInt(1, user);
+            ps.setInt(2, thread);
+        }, VOTE_MAPPER);
+        if (result.isEmpty()) {
+            return null;
+        }
+        return result.get(0);
     }
 }

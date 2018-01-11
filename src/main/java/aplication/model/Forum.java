@@ -11,16 +11,16 @@ import java.math.BigInteger;
 public class Forum {
 
     @JsonIgnoreProperties
-    private BigInteger id;
+    private Integer id;
 
     @JsonProperty("posts")
-    private BigInteger posts = BigInteger.valueOf(0);
+    private Integer posts = 0;
 
     @JsonProperty("slug")
     private final String slug;
 
     @JsonProperty("threads")
-    private BigInteger threads = BigInteger.valueOf(0);
+    private Integer threads = 0;
 
     @JsonProperty("title")
     private final String title;
@@ -36,7 +36,7 @@ public class Forum {
         this.user = user;
     }
 
-    public Forum(BigInteger id, BigInteger posts, BigInteger threads, String slug, String title, String user) {
+    public Forum(Integer id, Integer posts, Integer threads, String slug, String title, String user) {
         this.id = id;
         this.posts = posts;
         this.threads = threads;
@@ -45,7 +45,7 @@ public class Forum {
         this.user = user;
     }
 
-    public BigInteger getPosts() {
+    public Integer getPosts() {
         return posts;
     }
 
@@ -61,7 +61,7 @@ public class Forum {
         return user;
     }
 
-    public BigInteger getThreads() {
+    public Integer getThreads() {
         return threads;
     }
 
@@ -69,7 +69,7 @@ public class Forum {
         this.user = user;
     }
 
-    public BigInteger getId() {
+    public Integer getId() {
         return id;
     }
 }
