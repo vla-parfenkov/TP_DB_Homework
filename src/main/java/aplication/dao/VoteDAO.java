@@ -30,12 +30,11 @@ public class VoteDAO {
         return voice;
     };
 
-    public void createVote(String nickname, Integer voice, Integer thread) {
+    public void createVote(Integer userId, Integer voice, Integer thread) {
 
         template.update("insert into thread_votes(user_id, thread, voice)"
-                + " values((SELECT id FROM user_account " +
-                "WHERE lower(nickname) = lower(?)),?,?) ", ps ->{
-            ps.setString(1, nickname);
+                + " values(?,?,?) ", ps ->{
+            ps.setInt(1, userId);
             ps.setInt(2, thread);
             ps.setInt(3, voice);
         });
@@ -48,7 +47,6 @@ public class VoteDAO {
                     ps.setInt(2, userId);
                     ps.setInt(3, thread);
                 });
-
     }
 
     public Vote getVote(Integer user, Integer thread) {

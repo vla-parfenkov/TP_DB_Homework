@@ -40,21 +40,9 @@ public class ThreadController {
     @RequestMapping(method = RequestMethod.POST, path = "/{slug_or_id}/create")
     public ResponseEntity createPost(@RequestBody List<Post> postData, @PathVariable(value = "slug_or_id") String slugOrId,
                                      @RequestHeader(value = "Accept", required = false) String accept) {
-        Thread thread = null;
-        Integer threadId = null;
-        try {
-            threadId = Integer.valueOf(slugOrId);
-        } catch (NumberFormatException ex){
-            thread = dbThread.getThreadBySlug(slugOrId);
-            if (thread == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel("Can't find thread with id " + slugOrId));
-            }
-        }
+        Thread thread = dbThread.getThreadBySlugOrID(slugOrId);
         if(thread == null) {
-            thread = dbThread.getThreadById(threadId);
-            if (thread == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel("Can't find thread with id " + slugOrId));
-            }
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel("Can't find thread with id " + slugOrId));
         }
 
         try {
@@ -63,10 +51,10 @@ public class ThreadController {
             for (Post post: posts) {
                 author.add(post.getAuthor());
             }
-            dbUser.setForumToAuthorPost(author, dbForum.setPosts(thread.getForum(), posts.size()).getId().intValue());
+           dbUser.setForumToAuthorPost(author, dbForum.setPosts(thread.getForum(), posts.size()).getId());
             return ResponseEntity.status(HttpStatus.CREATED).body(posts);
         } catch (DataIntegrityViolationException ex) {
-          return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel("Can't find post author by nickname"));
+          return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel(ex.getMessage()));
         } catch (RuntimeException ex) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorModel(ex.getMessage()));
         }
@@ -90,7 +78,7 @@ public class ThreadController {
        Vote oldVote = dbVote.getVote(userId, thread.getId());
        if (oldVote == null) {
            try {
-               dbVote.createVote(vote.getNickname(), vote.getVoice(), thread.getId());
+               dbVote.createVote(userId, vote.getVoice(), thread.getId());
                thread.setVotes(thread.getVotes() + vote.getVoice());
                return ResponseEntity.status(HttpStatus.OK).body(thread);
            } catch (DataIntegrityViolationException ex) {

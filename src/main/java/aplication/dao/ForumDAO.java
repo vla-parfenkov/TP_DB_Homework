@@ -95,9 +95,9 @@ public class ForumDAO {
 
     }
 
-    public void decThreads(String slug) {
-        template.update("UPDATE forum SET threads = threads - 1 WHERE lower(slug) = lower(?)",
-                ps -> ps.setString(1, slug));
+    public void decThreads(Integer id) {
+        template.update("UPDATE forum SET threads = threads - 1 WHERE id = ?",
+                ps -> ps.setInt(1, id));
     }
 
 

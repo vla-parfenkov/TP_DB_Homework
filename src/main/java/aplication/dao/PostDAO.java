@@ -114,20 +114,25 @@ public class PostDAO {
         }
 
 
-        String sql = "insert into post(id, created, message, isedited, author, thread, parent, forum) " +
-                "values(?,?,?,?,?,?,?,?)";
+        String sql = "insert into post(id, created, message, isedited, author, thread, parent, forum, path) " +
+                "values(?,?,?,?,?,?,?,?, create_path(?,?,?))"
+                ;
         template.batchUpdate(sql, new BatchPreparedStatementSetter() {
 
                 @Override
                 public void setValues(PreparedStatement ps, int i) throws SQLException {
-                    ps.setInt(1, posts.get(i).getId());
-                    ps.setTimestamp(2, posts.get(i).getCreated());
-                    ps.setString(3, posts.get(i).getMessage());
-                    ps.setBoolean(4, posts.get(i).getIsEdited());
-                    ps.setString(5, posts.get(i).getAuthor());
-                    ps.setInt(6, posts.get(i).getThread() );
-                    ps.setInt(7,  posts.get(i).getParent());
-                    ps.setString(8, posts.get(i).getForum());
+                    Post post = posts.get(i);
+                    ps.setInt(1, post.getId());
+                    ps.setTimestamp(2, post.getCreated());
+                    ps.setString(3, post.getMessage());
+                    ps.setBoolean(4, post.getIsEdited());
+                    ps.setString(5, post.getAuthor());
+                    ps.setInt(6, post.getThread() );
+                    ps.setInt(7,  post.getParent());
+                    ps.setString(8, post.getForum());
+                    ps.setInt(9, post.getParent());
+                    ps.setInt(10,post.getThread());
+                    ps.setInt(11, post.getId());
                 }
 
                 @Override
