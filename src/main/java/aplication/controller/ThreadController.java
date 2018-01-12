@@ -29,12 +29,12 @@ public class ThreadController {
     private final VoteDAO dbVote;
 
     @Autowired
-    ThreadController(JdbcTemplate template){
-        this.dbForum = new ForumDAO(template);
-        this.dbThread = new ThreadDAO(template);
-        this.dbUser = new UserDAO(template);
-        this.dbPost = new PostDAO(template);
-        this.dbVote = new VoteDAO(template);
+    public ThreadController(ForumDAO dbForum, ThreadDAO dbThread, UserDAO dbUser, PostDAO dbPost, VoteDAO dbVote) {
+        this.dbForum = dbForum;
+        this.dbThread = dbThread;
+        this.dbUser = dbUser;
+        this.dbPost = dbPost;
+        this.dbVote = dbVote;
     }
 
     @RequestMapping(method = RequestMethod.POST, path = "/{slug_or_id}/create")

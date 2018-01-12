@@ -4,7 +4,7 @@ import aplication.model.ErrorModel;
 import aplication.model.User;
 
 
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +20,7 @@ public class UserController {
 
     private final UserDAO dbUser;
 
+    @Autowired
     UserController(UserDAO userDAO){
         this.dbUser = userDAO;
     }

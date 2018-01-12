@@ -30,15 +30,16 @@ import java.util.List;
 @RequestMapping(path = "/api/forum")
 public class ForumController {
 
+
     private final ForumDAO dbForum;
     private final ThreadDAO dbThread;
     private final UserDAO dbUser;
 
     @Autowired
-    ForumController(JdbcTemplate template){
-        this.dbForum = new ForumDAO(template);
-        this.dbThread = new ThreadDAO(template);
-        this.dbUser = new UserDAO(template);
+    public ForumController(ForumDAO dbForum, ThreadDAO dbThread, UserDAO dbUser) {
+        this.dbForum = dbForum;
+        this.dbThread = dbThread;
+        this.dbUser = dbUser;
     }
 
     @RequestMapping(method = RequestMethod.POST, path = "/create")

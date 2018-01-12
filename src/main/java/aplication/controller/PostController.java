@@ -16,19 +16,12 @@ import java.util.List;
 @RestController
 @RequestMapping(path = "/api/post")
 public class PostController {
-    private final ForumDAO dbForum;
-    private final ThreadDAO dbThread;
-    private final UserDAO dbUser;
+
     private final PostDAO dbPost;
-    private final VoteDAO dbVote;
 
     @Autowired
-    PostController(JdbcTemplate template){
-        this.dbForum = new ForumDAO(template);
-        this.dbThread = new ThreadDAO(template);
-        this.dbUser = new UserDAO(template);
-        this.dbPost = new PostDAO(template);
-        this.dbVote = new VoteDAO(template);
+    public PostController(PostDAO dbPost) {
+        this.dbPost = dbPost;
     }
 
     @RequestMapping(method = RequestMethod.GET, path = "/{id}/details")

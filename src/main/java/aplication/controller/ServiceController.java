@@ -2,6 +2,7 @@ package aplication.controller;
 
 import aplication.dao.ServiceDAO;
 import aplication.model.ServiceModel;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,6 +16,7 @@ public class ServiceController {
     private final ServiceDAO dbService;
 
 
+    @Autowired
     ServiceController(ServiceDAO serviceDAO){
         this.dbService = serviceDAO;
     }
