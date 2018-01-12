@@ -75,6 +75,7 @@ public class ForumController {
                     forum.getSlug(),
                     threadData.getMessage());
             dbUser.setForumToUsers(threadData.getAuthor(), forum.getId());
+            dbForum.incThreads(forum.getId());
             return ResponseEntity.status(HttpStatus.CREATED).body(thread);
         } catch (DuplicateKeyException ex) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(dbThread.getThreadBySlug(threadData.getSlug()));

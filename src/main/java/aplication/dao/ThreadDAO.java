@@ -135,17 +135,12 @@ public class ThreadDAO {
         });
     }
 
-    public Thread setVotes(Integer id, Integer voice) {
-        List<Thread> result = template.query("UPDATE thread SET votes = votes + ? WHERE id = ? " +
-                        "RETURNING *",
+    public void setVotes(Integer id, Integer voice) {
+        template.update("UPDATE thread SET votes = ? WHERE id = ? ",
                 ps -> {
                     ps.setInt(1, voice);
                     ps.setInt(2, id);
-                }, THREAD_MAPPER);
-        if (result.isEmpty()) {
-            return null;
-        }
-        return result.get(0);
+                });
 
     }
 

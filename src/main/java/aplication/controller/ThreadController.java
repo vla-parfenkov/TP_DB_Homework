@@ -68,34 +68,16 @@ public class ThreadController {
        if (thread == null) {
            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel("Can't find thread"));
        }
-       List<User> user = dbUser.getUser(vote.getNickname());
-       Integer userId;
-       if (user == null) {
-           return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel("Can't find user"));
-       } else {
-           userId = user.get(0).getId();
+
+
+       try {
+           Integer voice = dbVote.vote(vote.getNickname(),thread.getId(),vote.getVoice());
+           thread.setVotes(thread.getVotes() + voice);
+           return ResponseEntity.status(HttpStatus.OK).body(thread);
+       } catch (DataIntegrityViolationException ex) {
+           return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel(ex.getMessage()));
        }
-       Vote oldVote = dbVote.getVote(userId, thread.getId());
-       if (oldVote == null) {
-           try {
-               dbVote.createVote(userId, vote.getVoice(), thread.getId());
-               thread.setVotes(thread.getVotes() + vote.getVoice());
-               return ResponseEntity.status(HttpStatus.OK).body(thread);
-           } catch (DataIntegrityViolationException ex) {
-               return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel(ex.getMessage()));
-           }
-       } else {
-           if (oldVote.getVoice().equals(vote.getVoice())) {
-               return ResponseEntity.status(HttpStatus.OK).body(thread);
-           }
-           try {
-               dbVote.updateVote(oldVote.getUserId(), vote.getVoice(), thread.getId());
-               thread.setVotes(thread.getVotes() + 2 * vote.getVoice());
-               return ResponseEntity.status(HttpStatus.OK).body(thread);
-           } catch (DataIntegrityViolationException ex) {
-               return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorModel(ex.getMessage()));
-           }
-       }
+
 
     }
 

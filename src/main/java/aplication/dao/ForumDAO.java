@@ -85,13 +85,10 @@ public class ForumDAO {
                 return result.get(0);
     }
 
-  public Forum incThreads(String slug) {
-        List<Forum> result = template.query("UPDATE forum SET threads = threads + 1 WHERE lower(slug) = lower(?) RETURNING *",
-                ps -> ps.setString(1, slug), FORUM_MAPPER);
-        if (result.isEmpty()) {
-            return null;
-        }
-        return result.get(0);
+  public void incThreads(Integer id) {
+      template.update("UPDATE forum SET threads = threads + 1 WHERE id = ?",
+              ps -> ps.setInt(1, id));
+
 
     }
 

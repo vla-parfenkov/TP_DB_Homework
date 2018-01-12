@@ -29,6 +29,8 @@ public class VoteDAO {
         voice.setUserId(res.getInt("user_id"));
         return voice;
     };
+    private static final RowMapper<Integer> VOICE_MAPPER = (res, num) -> res.getInt("voice");
+
 
     public void createVote(Integer userId, Integer voice, Integer thread) {
 
@@ -60,5 +62,13 @@ public class VoteDAO {
             return null;
         }
         return result.get(0);
+    }
+
+    public Integer vote(String nickname, Integer thread, Integer voice) {
+        return template.query("select procces_vote(?, ?, ?) as voice ", ps ->{
+            ps.setString(1, nickname);
+            ps.setInt(2, voice);
+            ps.setInt(3, thread);
+        }, VOICE_MAPPER ).get(0);
     }
 }
